@@ -64,7 +64,7 @@ declare namespace Api {
   namespace Auth {
     /** 登录参数 */
     interface LoginParams {
-      userName: string
+      name: string
       password: string
     }
 
@@ -131,5 +131,41 @@ declare namespace Api {
       Pick<RoleListItem, 'roleId' | 'roleName' | 'roleCode' | 'description' | 'enabled'> &
         Api.Common.CommonSearchParams
     >
+  }
+
+  /** 文件库类型 */
+  namespace DocLib {
+    /** 文档库参数 */
+    interface DocLibInfo {
+      name: string
+      id: number
+    }
+  }
+
+  /** 文件类型 */
+  namespace Doc {
+    /** 文档参数 */
+    interface DocInfo {
+      name: string
+      size: number
+      parentId: number
+      type: string
+    }
+
+    /** 创建上传会话参数 */
+    interface uplodeSessionParams {
+      file_name: string
+      file_size: number
+      lib_id: number
+      parent_id: number
+      type: string
+    }
+
+    /** 上传会话参数 */
+    interface uplodeSessionResponse {
+      doc_id: number
+      uplode_id: number
+      uplode_url: string
+    }
   }
 }
