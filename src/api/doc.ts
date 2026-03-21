@@ -14,15 +14,20 @@ export function fetchUploader(params: Api.Doc.uplodeSessionParams) {
 
 /**
  * 上传文件
- * @param file 上传文件
+ * @param formData FormData 对象 (包含 file 字段)
+ * @param onUploadProgress 上传进度回调
  * @returns 上传结果
  */
-export function UploadDoc(file: string) {
-  return request.post({
-    url: '/api/doc/upload',
-    data: {
-      file: file
-    }
+export function uploadFile(
+  formData: FormData,
+  onUploadProgress?: (progressEvent: any) => void
+) {
+  return api.post<Api.File.FileUploadResult>({
+    url: '/file/upload',
+    data: formData,
+    showSuccessMessage: true,
+    // 传递进度回调
+    onUploadProgress
   })
 }
 
