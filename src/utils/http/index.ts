@@ -82,13 +82,12 @@ axiosInstance.interceptors.request.use(
 
 /** 响应拦截器 */
 axiosInstance.interceptors.response.use(
-  (response: AxiosResponse<BaseResponse>) => {
-    const { code, msg } = response.data
-    if (code === ApiStatus.success) return response
-    if (code === ApiStatus.unauthorized) handleUnauthorizedError(msg)
-    throw createHttpError(msg || $t('httpMsg.requestFailed'), code)
+  (response: AxiosResponse) => {
+    // 后端直接返回数据，没有 code/msg 包装，直接返回 response
+    return response
   },
   (error) => {
+    // 401 处理：依赖 HTTP 状态码 (如果后端返回 401 状态码)
     if (error.response?.status === ApiStatus.unauthorized) handleUnauthorizedError()
     return Promise.reject(handleError(error))
   }
@@ -164,7 +163,7 @@ function delay(ms: number) {
 
 /** 请求函数 */
 async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> {
-  // POST | PUT 参数自动填充
+  // POST | PUT 参数自动填充 (保留原有逻辑)
   if (
     ['POST', 'PUT'].includes(config.method?.toUpperCase() || '') &&
     config.params &&
@@ -175,14 +174,18 @@ async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> 
   }
 
   try {
-    const res = await axiosInstance.request<BaseResponse<T>>(config)
+    // 这里的泛型改为 T，因为 response.data 直接就是 T
+    const res = await axiosInstance.request<T>(config)
 
-    // 显示成功消息
-    if (config.showSuccessMessage && res.data.msg) {
-      showSuccess(res.data.msg)
+    // 显示成功消息 (调整：因为没有 res.data.msg 了，如需提示需手动在 config 传，或移除该逻辑)
+    if (config.showSuccessMessage) {
+      // 如果你想显示默认成功语，可以这样：
+      showSuccess('操作成功')
+      // 或者如果你的 config 里扩展了自定义消息字段，也可以用那个
     }
 
-    return res.data.data as T
+    // 直接返回 res.data (原来是 res.data.data)
+    return res.data as T
   } catch (error) {
     if (error instanceof HttpError && error.code !== ApiStatus.unauthorized) {
       const showMsg = config.showErrorMessage !== false
