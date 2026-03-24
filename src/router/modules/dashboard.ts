@@ -11,6 +11,17 @@ export const dashboardRoutes: AppRouteRecord = {
   },
   children: [
     {
+      path: 'doc',
+      name: 'Doc',
+      component: '/doc/uploader/index',
+      meta: {
+        title: 'menus.dashboard.doc',
+        icon: 'ri:home-smile-2-line',
+        keepAlive: false,
+        fixedTab: true
+      }
+    },
+    {
       path: 'console',
       name: 'Console',
       component: '/dashboard/console',

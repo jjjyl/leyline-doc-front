@@ -222,6 +222,7 @@
       "title": "内嵌页面"
     },
     "dashboard": {
+      "doc":"文档",
       "title": "仪表盘",
       "console": "工作台",
       "analysis": "分析页",
