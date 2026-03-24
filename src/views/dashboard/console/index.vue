@@ -4,6 +4,12 @@
     <CardList></CardList>
 
     <ElRow :gutter="20">
+      <ElCol :sm="24" :lg="24">
+        <DocUploader />
+      </ElCol>
+    </ElRow>
+
+    <ElRow :gutter="20">
       <ElCol :sm="24" :md="12" :lg="10">
         <ActiveUser />
       </ElCol>
@@ -36,6 +42,7 @@
   import Dynamic from './modules/dynamic-stats.vue'
   import TodoList from './modules/todo-list.vue'
   import AboutProject from './modules/about-project.vue'
+  import DocUploader from '@/views/doc/uploader/index.vue'
 
   defineOptions({ name: 'Console' })
 </script>
