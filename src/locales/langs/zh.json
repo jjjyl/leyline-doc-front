@@ -302,6 +302,23 @@
       "menu32": "菜单3-2",
       "menu321": "菜单3-2-1"
     },
+    "docIntelligence": {
+      "title": "文档智能操作",
+      "operation": "智能操作交互",
+      "guide": "操作引导"
+    },
+    "docExtraction": {
+      "title": "文档信息提取",
+      "import": "文档导入",
+      "extract": "信息提取",
+      "storage": "数据存储"
+    },
+    "tableFilling": {
+      "title": "表格数据填写",
+      "template": "模板导入",
+      "filling": "数据填写",
+      "export": "导出分享"
+    },
     "safeguard": {
       "title": "运维管理",
       "server": "服务器管理"

@@ -302,6 +302,23 @@
       "menu32": "Menu 3-2",
       "menu321": "Menu 3-2-1"
     },
+    "docIntelligence": {
+      "title": "Document Intelligence",
+      "operation": "Smart Operation",
+      "guide": "Operation Guide"
+    },
+    "docExtraction": {
+      "title": "Document Extraction",
+      "import": "Document Import",
+      "extract": "Information Extract",
+      "storage": "Data Storage"
+    },
+    "tableFilling": {
+      "title": "Table Filling",
+      "template": "Template Import",
+      "filling": "Data Filling",
+      "export": "Export Share"
+    },
     "safeguard": {
       "title": "Safeguard",
       "server": "Server"
