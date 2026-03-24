@@ -13,7 +13,12 @@ export function fetchLogin(params: Api.Auth.LoginParams) {
     // showErrorMessage: false // 不显示错误消息
   })
 }
-
+/**
+ * 用户注册
+ */
+export const register = (params: Api.Auth.RegisterParams) => {
+  return request.post({ url: '/api/auth/register', params })
+}
 /**
  * 获取用户信息
  * @returns 用户信息
