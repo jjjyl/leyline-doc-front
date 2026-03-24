@@ -15,7 +15,7 @@ export function fetchDocLibs() {
  * @param name 文档库名称
  * @returns lib-id
  */
-export function docLibCreate(name: string) {
+export function docLibCreate(name: string): Promise<Array<Api.DocLib.DocLibInfo>> {
   return request.post({
     url: `/api/doc-lib`,
     data: {

@@ -13,20 +13,6 @@ export function fetchUploader(params: Api.Doc.uplodeSessionParams) {
 }
 
 /**
- * 上传文件
- * @param file 上传文件
- * @returns 上传结果
- */
-export function UploadDoc(file: string) {
-  return request.post({
-    url: '/api/doc/upload',
-    data: {
-      file: file
-    }
-  })
-}
-
-/**
  * 完成上传
  * @param doc_id 文件id
  * @returns doc_id 文件id
