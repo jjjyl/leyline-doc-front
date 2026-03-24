@@ -137,8 +137,9 @@ declare namespace Api {
   namespace DocLib {
     /** 文档库参数 */
     interface DocLibInfo {
+      belongsUserId: number
       name: string
-      id: number
+      libId: number
     }
   }
 
@@ -162,10 +163,10 @@ declare namespace Api {
     }
 
     /** 上传会话参数 */
-    interface uplodeSessionResponse {
+    interface uploadSessionResponse {
       doc_id: number
-      uplode_id: number
-      uplode_url: string
+      upload_id: number
+      upload_url: string
     }
   }
 }
