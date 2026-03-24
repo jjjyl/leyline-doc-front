@@ -219,10 +219,12 @@
       // 登录请求
       const { username, password } = formData
 
-      const { token, refreshToken } = await fetchLogin({
+      const { refresh_token, token, user_id, user_name } = await fetchLogin({
         name: username,
         password
       })
+
+      console.log(refresh_token)
 
       // 验证token
       if (!token) {
@@ -230,7 +232,7 @@
       }
 
       // 存储 token 和登录状态
-      userStore.setToken(token, refreshToken)
+      userStore.setToken(token, refresh_token)
       userStore.setLoginStatus(true)
 
       // 登录成功处理
