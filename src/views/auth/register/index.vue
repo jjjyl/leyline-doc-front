@@ -21,7 +21,7 @@
             <ElFormItem prop="username">
               <ElInput
                 class="custom-height"
-                v-model.trim="formData.username"
+                v-model.trim="formData.name"
                 :placeholder="$t('register.placeholder.username')"
               />
             </ElFormItem>
@@ -48,6 +48,13 @@
                 show-password
               />
             </ElFormItem>
+            <ElFormItem prop="email">
+              <ElInput
+                class="custom-height"
+                v-model.trim="formData.email"
+                :placeholder="$t('请输入邮箱')"
+              />
+            </ElFormItem>
 
             <ElFormItem prop="agreement">
               <ElCheckbox v-model="formData.agreement">
@@ -64,7 +71,7 @@
               <ElButton
                 class="w-full custom-height"
                 type="primary"
-                @click="register"
+                @click="handleSubmit"
                 :loading="loading"
                 v-ripple
               >
@@ -88,12 +95,14 @@
 <script setup lang="ts">
   import { useI18n } from 'vue-i18n'
   import type { FormInstance, FormRules } from 'element-plus'
+  import { register } from '@/api/auth' // 导入注册接口
 
   defineOptions({ name: 'Register' })
 
   interface RegisterForm {
-    username: string
+    name: string
     password: string
+    email: string
     confirmPassword: string
     agreement: boolean
   }
@@ -116,8 +125,9 @@
   })
 
   const formData = reactive<RegisterForm>({
-    username: '',
+    name: '',
     password: '',
+    email: '',
     confirmPassword: '',
     agreement: false
   })
@@ -174,7 +184,7 @@
   }
 
   const rules = computed<FormRules<RegisterForm>>(() => ({
-    username: [
+    name: [
       { required: true, message: t('register.placeholder.username'), trigger: 'blur' },
       {
         min: USERNAME_MIN_LENGTH,
@@ -195,32 +205,35 @@
    * 注册用户
    * 验证表单后提交注册请求
    */
-  const register = async () => {
+  const handleSubmit = async () => {
     if (!formRef.value) return
 
     try {
       await formRef.value.validate()
       loading.value = true
 
-      // TODO: 替换为真实 API 调用
-      // const params = {
-      //   username: formData.username,
-      //   password: formData.password
-      // }
-      // const res = await AuthService.register(params)
-      // if (res.code === ApiStatus.success) {
+      //TODO: 替换为真实 API 调用
+      const params = {
+        name: formData.name,
+        password: formData.password,
+        email: formData.email
+      }
+      // 调用注册接口，后端不返回数据，只需关注请求是否成功
+      await register(params)
+      // 请求成功（未抛出异常）
+      ElMessage.success(t('注册成功') || '注册成功')
+      toLogin()
+      // 模拟注册请求
+      // setTimeout(() => {
+      //   loading.value = false
       //   ElMessage.success('注册成功')
       //   toLogin()
-      // }
-
-      // 模拟注册请求
-      setTimeout(() => {
-        loading.value = false
-        ElMessage.success('注册成功')
-        toLogin()
-      }, REDIRECT_DELAY)
+      // }, REDIRECT_DELAY)
     } catch (error) {
       console.error('表单验证失败:', error)
+      // 请求失败，显示错误信息（错误信息可能由拦截器统一处理，这里做兜底）
+      ElMessage.error(t('register.failedMsg') || '注册失败，请重试')
+    } finally {
       loading.value = false
     }
   }

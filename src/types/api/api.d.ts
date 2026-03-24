@@ -67,11 +67,19 @@ declare namespace Api {
       name: string
       password: string
     }
+    // 注册请求参数
+    export interface RegisterParams {
+      name: string
+      password: string
+      email: string
+    }
 
     /** 登录响应 */
     interface LoginResponse {
       token: string
-      refreshToken: string
+      refresh_token: string
+      user_id: number
+      user_name: string
     }
 
     /** 用户信息 */
