@@ -17,10 +17,47 @@ export function fetchDocLibs(): Promise<Array<Api.DocLib.DocLibInfo>> {
  */
 export function docLibCreate(name: string) {
   return request.post({
-    url: `/api/doc-lib`,
+    url: '/api/doc-lib',
     data: {
       name: name
     }
+  })
+}
+
+/**
+ * 更新文档库
+ * @param  name 文档库名称
+ * @param lib_id 文档库id
+ * @returns 更新结果
+ */
+export function updateDocLib(lib_id: number, name: string) {
+  return request.put<Api.BaseResponse>({
+    url: '/api/doc-lib',
+    data: {
+      lib_id,
+      name
+    }
+  })
+}
+/**
+ * 获取文档库详情
+ * @param docLibId 文档库ID
+ * @returns 文档库详情
+ */
+export function getDocLib(docLibId: number) {
+  return request.get<Api.DocLib.DocLibInfo>({
+    url: `/api/doc-lib/${docLibId}`
+  })
+}
+
+/**
+ * 删除文档库
+ * @param id 文档库ID
+ * @returns 删除结果
+ */
+export function deleteDocLib(id: number) {
+  return request.del<Api.BaseResponse>({
+    url: `/api/doc-lib/${id}`
   })
 }
 
