@@ -199,6 +199,11 @@ declare namespace Api {
       docId: number
     }
   }
-
-
+  /** 表格类型 */
+  namespace Table {
+    interface TableInfo {
+      docId: number
+      table: any
+    }
+  }
 }
