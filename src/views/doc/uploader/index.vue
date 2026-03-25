@@ -95,7 +95,7 @@
       // ==========================================
       // 2. 创建上传会话
       // ==========================================
-      const sessionParams: Api.Doc.uplodeSessionParams = {
+      const sessionParams: Api.Doc.CreateUploadSessionRequest = {
         file_name: file.name,
         file_size: file.size,
         lib_id: lib_id,
@@ -103,7 +103,8 @@
         type: file.type || 'file'
       }
 
-      const sessionData: Api.Doc.uploadSessionResponse = await docApi.fetchUploader(sessionParams)
+      const sessionData: Api.Doc.CreateUploadSessionResponse =
+        await docApi.createUploadSession(sessionParams)
 
       const { doc_id, upload_id, upload_url } = sessionData
 
@@ -130,7 +131,7 @@
       // ==========================================
       // 4. 完成上传
       // ==========================================
-      uploadResult.value = await docApi.fetchUploadResult(doc_id)
+      uploadResult.value = await docApi.finishUpload(doc_id)
     } catch (err) {
       console.error('上传失败：', err)
       alert('上传失败')

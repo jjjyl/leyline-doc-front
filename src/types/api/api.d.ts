@@ -149,6 +149,12 @@ declare namespace Api {
       name: string
       libId: number
     }
+
+    export interface DocLibsResponse {
+      belongsUserId: number
+      libId: number
+      name: string
+    }
   }
 
   /** 文件类型 */
@@ -162,7 +168,7 @@ declare namespace Api {
     }
 
     /** 创建上传会话参数 */
-    interface uplodeSessionParams {
+    interface CreateUploadSessionRequest {
       file_name: string
       file_size: number
       lib_id: number
@@ -171,10 +177,20 @@ declare namespace Api {
     }
 
     /** 上传会话参数 */
-    interface uploadSessionResponse {
+    interface CreateUploadSessionResponse {
       doc_id: number
       upload_id: number
       upload_url: string
+    }
+
+    /** 验证完成上传参数 */
+    interface FinishUploadRequest {
+      docId: number
+    }
+
+    /** 完成上传返回 */
+    interface FinishUploadResponse {
+      docId: number
     }
   }
 }
