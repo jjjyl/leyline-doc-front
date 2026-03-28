@@ -42,6 +42,17 @@ export function getDocList(parentId: number, libId: number) {
   })
 }
 
+/**
+ * 删除文档
+ * @param docId 完成上传参数
+ * @returns 删除结果
+ */
+export function deleteDoc(docId: number) {
+  return request.del<string>({
+    url: `/api/doc/${docId}`
+  })
+}
+
 // /**
 //  * 提取表格Schema
 //  * @param docId 文档ID
