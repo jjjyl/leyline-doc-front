@@ -205,9 +205,47 @@ declare namespace Api {
   }
   /** 表格类型 */
   namespace Table {
+    /** 表格基础类型 */
     interface TableInfo {
+      colCount: number //列数
+      comment: string //表格备注
+      header: string[] //表头（列名）
+      id: string //表格唯一标识
+      name: string //表格名词
+      rowCount: number //行数（不包括表头）
+      rows: Row[] //数据行数组
+    }
+
+    /**数据行数组 */
+    interface Row {
+      id: string //行唯一标识，用于前端定位修改
+      cells: string[] //单元格内容数组，每个元素代表一列的值
+    }
+
+    interface schema {
+      comment: string
+      fields: field[]
+      name: string
+      primaryKey: string
+    }
+
+    interface field {
+      description: string
+      name: string
+      required: boolean
+      type: fieldType
+    }
+
+    enum fieldType {
+      string = 'string',
+      int64 = 'int64',
+      float64 = 'float64',
+      bool = 'bool'
+    }
+
+    interface generateTableResponse {
       docId: number
-      table: any
+      status: number
     }
   }
 }
