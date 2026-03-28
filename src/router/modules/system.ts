@@ -52,12 +52,18 @@ export const systemRoutes: AppRouteRecord = {
         title: 'menus.system.menu',
         icon: 'ri:menu-line',
         keepAlive: true,
-        roles: ['R_SUPER'],
-        authList: [
-          { title: '新增', authMark: 'add' },
-          { title: '编辑', authMark: 'edit' },
-          { title: '删除', authMark: 'delete' }
-        ]
+        roles: ['R_SUPER']
+      }
+    },
+    {
+      path: 'doc-lib',
+      name: 'DocLib',
+      component: '/system/doc-lib',
+      meta: {
+        title: '文档库管理',
+        icon: 'ri:folder-line',
+        keepAlive: true,
+        roles: ['R_SUPER', 'R_ADMIN']
       }
     },
     {

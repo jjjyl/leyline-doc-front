@@ -90,7 +90,7 @@
       // 1. 获取文档库（你自己替换接口地址）
       // ==========================================
       const libList = await docLibApi.fetchDocLibs()
-      const lib_id = libList[0]?.lib_id || 1 // 取第一个文档库
+      const lib_id = libList[0]?.libId || 1 // 取第一个文档库
 
       // ==========================================
       // 2. 创建上传会话
@@ -106,7 +106,7 @@
       const sessionData: Api.Doc.CreateUploadSessionResponse =
         await docApi.createUploadSession(sessionParams)
 
-      const { doc_id, upload_id, upload_url } = sessionData
+      const { doc_id, upload_url } = sessionData
 
       // ==========================================
       // 3. 上传文件到上传链接（独立域名）
@@ -131,7 +131,12 @@
       // ==========================================
       // 4. 完成上传
       // ==========================================
-      uploadResult.value = await docApi.finishUpload(doc_id)
+      const finishResult = await docApi.finishUpload(doc_id)
+      uploadResult.value = {
+        doc_id: finishResult.docId,
+        name: file.name,
+        url: `/doc/${finishResult.docId}` // 假设的文档查看链接
+      }
     } catch (err) {
       console.error('上传失败：', err)
       alert('上传失败')

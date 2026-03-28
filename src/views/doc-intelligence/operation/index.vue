@@ -51,6 +51,7 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
+import { executeOperation } from '@/api/operation' // 导入真实的API接口
 
 const form = reactive({
   instruction: ''
@@ -82,27 +83,20 @@ const executeInstruction = async () => {
   try {
     ElMessage.info('正在处理指令...')
 
-    // 调用API执行指令
-    const response = await fetch('/api/operation/execute', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        instruction: form.instruction
-      })
+    // 调用真实的智能操作API
+    const response = await executeOperation({
+      instruction: form.instruction
     })
 
-    const data = await response.json()
-    result.value = data.result || '指令执行完成'
+    result.value = response.data.result || '指令执行完成'
 
     // 添加到历史记录
     addToHistory(form.instruction, result.value)
 
     ElMessage.success('指令执行完成')
   } catch (error) {
-    ElMessage.error('指令执行失败')
-    result.value = '执行失败：' + error.message
+    ElMessage.error('指令执行失败: ' + (error.message || '未知错误'))
+    result.value = '执行失败：' + (error.message || '未知错误')
   }
 }
 
