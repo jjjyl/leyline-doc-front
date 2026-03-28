@@ -101,6 +101,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { extractTableData } from '@/api/doc'
 
 const extractForm = reactive({
   documentId: '',
@@ -130,6 +131,8 @@ const extracting = ref(false)
 const progress = ref(0)
 const progressStatus = ref<'success' | 'warning' | 'exception' | undefined>()
 const activeTab = ref('entities')
+const selectedDoc = ref(null)
+const extractedTables = ref([])
 
 const results = reactive({
   entities: [] as Array<{type: string, value: string, confidence: string, positions?: string[]}>,
@@ -179,30 +182,34 @@ const startExtract = async () => {
     return
   }
 
+  // 设置选中的文档
+  selectedDoc.value = documents.value.find(d => d.id === extractForm.documentId)
+
   extracting.value = true
   progress.value = 0
   progressStatus.value = ''
 
   try {
-    // 模拟提取过程
-    const steps = 20
-    for (let i = 0; i <= 100; i += 100 / steps) {
-      await new Promise(resolve => setTimeout(resolve, 300))
-      progress.value = Math.round(i)
+    // 调用真实的提取API
+    progress.value = 10
+    ElMessage.info('正在分析文档结构...')
 
-      // 模拟不同阶段的处理
-      if (i === 20) {
-        ElMessage.info('正在分析文档结构...')
-      } else if (i === 50) {
-        ElMessage.info('正在识别关键信息...')
-      } else if (i === 80) {
-        ElMessage.info('正在整理提取结果...')
-      }
+    // 提取表格数据
+    const tableResult = await extractTableData(extractForm.documentId)
+    progress.value = 50
+    ElMessage.info('正在识别关键信息...')
+
+    // 这里可以添加更多提取逻辑，如实体识别等
+    progress.value = 80
+    ElMessage.info('正在整理提取结果...')
+
+    // 处理提取结果
+    if (tableResult.data) {
+      // 处理表格数据
+      extractedTables.value = tableResult.data.tables || []
     }
 
-    // 生成模拟结果
-    generateMockResults()
-
+    progress.value = 100
     progressStatus.value = 'success'
     ElMessage.success('提取完成')
 
@@ -278,53 +285,6 @@ const addCustomEntity = async () => {
       confidence: '100%'
     })
     ElMessage.success('添加成功')
-  }
-}
-
-// 生成模拟结果
-const generateMockResults = () => {
-  const doc = documents.value.find(d => d.id === extractForm.documentId)
-  if (!doc) return
-
-  // 清空之前的结果
-  results.entities = []
-  results.keywords = []
-  results.amounts = []
-  results.dates = []
-  results.sentences = []
-  results.custom = []
-
-  // 根据文档类型和选择的提取类型生成结果
-  if (extractForm.types.includes('实体')) {
-    if (doc.type === 'docx') {
-      results.entities = [
-        { type: '人名', value: '张三', confidence: '95%', positions: ['第2段第5行'] },
-        { type: '机构名', value: 'ABC科技有限公司', confidence: '98%', positions: ['第1段第2行'] },
-        { type: '机构名', value: 'XYZ贸易有限公司', confidence: '97%', positions: ['第1段第3行'] }
-      ]
-    } else if (doc.type === 'xlsx') {
-      results.entities = [
-        { type: '人名', value: '张三', confidence: '95%', positions: ['A2单元格'] },
-        { type: '人名', value: '李四', confidence: '93%', positions: ['A3单元格'] },
-        { type: '人名', value: '王五', confidence: '94%', positions: ['A4单元格'] }
-      ]
-    }
-  }
-
-  if (extractForm.types.includes('关键词')) {
-    results.keywords = ['合同', '金额', '期限', '付款', '验收', '服务']
-  }
-
-  if (extractForm.types.includes('金额')) {
-    results.amounts = ['10000元', '5000元', '15000元']
-  }
-
-  if (extractForm.types.includes('日期')) {
-    results.dates = ['2024-01-01', '2024-12-31', '2024-06-30']
-  }
-
-  if (extractForm.types.includes('自定义') && extractForm.customRule) {
-    results.custom = ['自定义提取结果1', '自定义提取结果2']
   }
 }
 

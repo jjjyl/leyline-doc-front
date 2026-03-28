@@ -1,0 +1,2070 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "默认模块",
+    "description": "",
+    "version": "",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "doc-lib"
+    },
+    {
+      "name": "doc"
+    },
+    {
+      "name": "user"
+    },
+    {
+      "name": "table"
+    }
+  ],
+  "paths": {
+    "/api/doc-lib": {
+      "get": {
+        "summary": "列出文档库列表",
+        "deprecated": false,
+        "description": "获取所有文档库的列表",
+        "tags": [
+          "doc-lib"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功响应",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/doc.ListDocLibsResponse"
+                  }
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "列出文档库失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "更新文档库",
+        "deprecated": false,
+        "description": "更新指定文档库的信息",
+        "tags": [
+          "doc-lib"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/doc.UpdateDocLibRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功响应",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "更新文档库失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "创建文档库",
+        "deprecated": false,
+        "description": "创建新的文档库",
+        "tags": [
+          "doc-lib"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/doc.CreateDocLibRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "创建成功响应",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/doc.CreateDocLibResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "创建文档库失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/doc-lib/{id}": {
+      "get": {
+        "summary": "获取文档库详情",
+        "deprecated": false,
+        "description": "获取指定文档库的详细信息",
+        "tags": [
+          "doc-lib"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "文档库 ID",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功响应",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/doc.GetDocLibResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "文档库 ID 格式错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "获取文档库失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "删除文档库",
+        "deprecated": false,
+        "description": "删除指定的文档库",
+        "tags": [
+          "doc-lib"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "文档库 ID",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功响应",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "文档库 ID 格式错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "删除文档库失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/doc/upload": {
+      "post": {
+        "summary": "上传文档",
+        "deprecated": true,
+        "description": "上传文档文件到服务器",
+        "tags": [
+          "doc"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "description": "要上传的文件",
+                    "type": "string",
+                    "format": "binary",
+                    "example": ""
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "上传成功响应",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "获取上传文件失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "上传文件失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/doc/upload-session": {
+      "post": {
+        "summary": "创建上传会话",
+        "deprecated": false,
+        "description": "创建分片上传会话，获取上传 URL 和上传 ID",
+        "tags": [
+          "doc"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/doc.CreateUploadSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "创建成功响应",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/doc.CreateUploadSessionResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "创建上传会话失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/doc/upload/finish": {
+      "post": {
+        "summary": "完成上传",
+        "deprecated": false,
+        "description": "完成分片上传，合并所有分片",
+        "tags": [
+          "doc"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/doc.FinishUploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "完成成功响应",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/doc.FinishUploadResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "完成上传失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "用户登录",
+        "deprecated": false,
+        "description": "用户登录获取 token",
+        "tags": [
+          "user"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/user.LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/user.LoginResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "用户名或密码错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "summary": "用户登出",
+        "deprecated": false,
+        "description": "用户登出，将 token 加入黑名单",
+        "tags": [
+          "user"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "登出成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "summary": "刷新 Token",
+        "deprecated": false,
+        "description": "使用 refresh_token 获取新的 access_token",
+        "tags": [
+          "user"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/user.RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "刷新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/user.RefreshTokenResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "无效的 refresh_token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "summary": "用户注册",
+        "deprecated": false,
+        "description": "注册新用户",
+        "tags": [
+          "user"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/user.RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "注册成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/user.RegisterResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "409": {
+            "description": "用户已存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/user/me": {
+      "get": {
+        "summary": "获取当前用户信息",
+        "deprecated": false,
+        "description": "获取当前登录用户的详细信息",
+        "tags": [
+          "user"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/user.UserInfoResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "更新用户信息",
+        "deprecated": false,
+        "description": "更新当前登录用户的信息",
+        "tags": [
+          "user"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/user.UpdateUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/user.UserInfoResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "409": {
+            "description": "用户名或邮箱已存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "删除用户",
+        "deprecated": false,
+        "description": "删除当前登录的用户",
+        "tags": [
+          "user"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/user/password": {
+      "put": {
+        "summary": "更新密码",
+        "deprecated": false,
+        "description": "更新当前登录用户的密码",
+        "tags": [
+          "user"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/user.UpdatePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "原密码错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/user/{id}": {
+      "get": {
+        "summary": "根据 ID 获取用户信息",
+        "deprecated": false,
+        "description": "根据用户 ID 获取用户详细信息",
+        "tags": [
+          "user"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "用户 ID",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/user.UserInfoResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "用户 ID 格式错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "404": {
+            "description": "用户不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/table/extract-schema/{id}": {
+      "post": {
+        "summary": "提取文档表格 Schema",
+        "deprecated": false,
+        "description": "从指定文档中提取表格 Schema 定义，返回表格的字段结构信息",
+        "tags": [
+          "table"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "文档 ID",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "提取成功响应",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/table.ExtractTableSchemaResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "文档 ID 格式错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "提取表格 Schema 失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/table/extract/{id}": {
+      "post": {
+        "summary": "提取文档表格数据",
+        "deprecated": false,
+        "description": "从指定文档中提取表格数据，返回包含表头和数据行的完整表格",
+        "tags": [
+          "table"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "文档 ID",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "提取成功响应",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/table.ExtractTableDataResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "文档 ID 格式错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "提取表格失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/table/generate/{id}": {
+      "post": {
+        "summary": "生成文档表格",
+        "deprecated": false,
+        "description": "从指定文档中生成结构化的表格数据，包含 Schema 提取和数据提取两个阶段",
+        "tags": [
+          "table"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "文档 ID",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "生成成功响应",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/table.GenerateTableResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "文档 ID 格式错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "生成表格失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/table/{id}": {
+      "get": {
+        "summary": "获取文档表格数据",
+        "deprecated": false,
+        "description": "从 MongoDB 中获取指定文档已提取的表格数据，如果文档尚未提取表格则返回空列表",
+        "tags": [
+          "table"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "文档 ID",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "登录凭证",
+            "example": "Bearer {{token}}",
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功响应",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/table.GetTablesResponse"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "文档 ID 格式错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          },
+          "500": {
+            "description": "获取表格失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {}
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "doc.CreateDocLibRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "doc.CreateDocLibResponse": {
+        "type": "object",
+        "properties": {
+          "lib_id": {
+            "type": "integer"
+          }
+        }
+      },
+      "doc.GetDocLibResponse": {
+        "type": "object",
+        "properties": {
+          "belongs_user_id": {
+            "type": "integer"
+          },
+          "lib_id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "doc.CreateUploadSessionRequest": {
+        "type": "object",
+        "properties": {
+          "file_name": {
+            "type": "string"
+          },
+          "file_size": {
+            "type": "integer"
+          },
+          "lib_id": {
+            "type": "integer"
+          },
+          "parent_id": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "doc.ListDocLibsResponse": {
+        "type": "object",
+        "properties": {
+          "belongs_user_id": {
+            "type": "integer"
+          },
+          "lib_id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "doc.CreateUploadSessionResponse": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "integer"
+          },
+          "upload_id": {
+            "type": "string"
+          },
+          "upload_url": {
+            "type": "string"
+          }
+        }
+      },
+      "doc.UpdateDocLibRequest": {
+        "type": "object",
+        "properties": {
+          "lib_id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "doc.FinishUploadRequest": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "integer"
+          }
+        }
+      },
+      "user.LoginRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "password"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "doc.FinishUploadResponse": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "integer"
+          }
+        }
+      },
+      "user.LoginResponse": {
+        "type": "object",
+        "properties": {
+          "refresh_token": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "integer"
+          },
+          "user_name": {
+            "type": "string"
+          }
+        }
+      },
+      "user.RefreshTokenRequest": {
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "properties": {
+          "refresh_token": {
+            "type": "string"
+          }
+        }
+      },
+      "user.RefreshTokenResponse": {
+        "type": "object",
+        "properties": {
+          "refresh_token": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "user.RegisterRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "name",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 3
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 6
+          }
+        }
+      },
+      "table.ExtractTableDataResponse": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "integer"
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/table.TableFormat"
+            }
+          }
+        }
+      },
+      "user.RegisterResponse": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "integer"
+          },
+          "user_name": {
+            "type": "string"
+          }
+        }
+      },
+      "table.ExtractTableSchemaResponse": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "integer"
+          },
+          "schemas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/table.TableSchema"
+            }
+          }
+        }
+      },
+      "user.UpdatePasswordRequest": {
+        "type": "object",
+        "required": [
+          "new_password",
+          "old_password"
+        ],
+        "properties": {
+          "new_password": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 6
+          },
+          "old_password": {
+            "type": "string"
+          }
+        }
+      },
+      "table.FiledType": {
+        "type": "string",
+        "enum": [
+          "string",
+          "int64",
+          "float64",
+          "bool"
+        ],
+        "x-enum-varnames": [
+          "TypeString",
+          "TypeInt64",
+          "TypeFloat64",
+          "TypeBool"
+        ]
+      },
+      "user.UpdateUserRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 3
+          }
+        }
+      },
+      "table.GenerateTableResponse": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "user.UserInfoResponse": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "integer"
+          }
+        }
+      },
+      "table.TableField": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "type": {
+            "$ref": "#/components/schemas/table.FiledType"
+          }
+        }
+      },
+      "table.GetTablesResponse": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "integer"
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/table.TableFormat"
+            }
+          }
+        }
+      },
+      "table.TableFormat": {
+        "type": "object",
+        "properties": {
+          "col_count": {
+            "description": "列数",
+            "type": "integer"
+          },
+          "comment": {
+            "description": "表格备注",
+            "type": "string"
+          },
+          "headers": {
+            "description": "表头（列名）",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "description": "表格名称",
+            "type": "string"
+          },
+          "row_count": {
+            "description": "行数（不包含表头）",
+            "type": "integer"
+          },
+          "rows": {
+            "description": "数据行数组",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/table.TableRow"
+            }
+          }
+        }
+      },
+      "table.TableRow": {
+        "type": "object",
+        "properties": {
+          "cells": {
+            "description": "单元格内容数组，每个元素代表一列的值",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "table.TableSchema": {
+        "type": "object",
+        "properties": {
+          "comment": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/table.TableField"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "primary_key": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "responses": {},
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "servers": [],
+  "security": [
+    {
+      "bearer": []
+    }
+  ]
+}

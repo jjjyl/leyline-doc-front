@@ -65,6 +65,7 @@
   import * as docLibApi from '@/api/doc-lib'
   import * as docApi from '@/api/doc'
   import axios from 'axios'
+  import { getDocumentList } from '@/api/doc' // 导入真实的API接口
 
   const documents = ref([])
 
@@ -161,9 +162,8 @@
   // 加载文档列表
   const loadDocuments = async () => {
     try {
-      const response = await fetch('/api/documents')
-      const data = await response.json()
-      documents.value = data.list || []
+      const response = await getDocumentList()
+      documents.value = response.data.list || []
     } catch (error) {
       ElMessage.error('获取文档列表失败')
     }

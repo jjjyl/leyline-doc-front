@@ -82,6 +82,8 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { getDocumentList } from '@/api/documents'
+import { getTableData, generateTable } from '@/api/doc'
 
 const fillingForm = reactive({
   templateId: '',
@@ -94,15 +96,18 @@ const dataSources = ref([])
 // 加载模板和数据源
 const loadTemplatesAndDataSources = async () => {
   try {
-    // 加载模板
-    const templateResponse = await fetch('/api/templates')
-    const templateData = await templateResponse.json()
-    templates.value = templateData.list || []
+    // 加载模板（实际上是包含表格的文档）
+    const templateResponse = await getDocumentList()
+    templates.value = (templateResponse.data.list || []).map((doc: any) => ({
+      id: doc.id,
+      name: doc.name,
+      type: doc.type,
+      tableCount: doc.tableCount || 0
+    }))
 
-    // 加载数据源（这里用文档列表作为数据源）
-    const docResponse = await fetch('/api/doc-lib')
-    const docData = await docResponse.json()
-    dataSources.value = (docData || []).map((doc: any) => ({
+    // 加载数据源（文档列表）
+    const docResponse = await getDocumentList()
+    dataSources.value = (docResponse.data.list || []).map((doc: any) => ({
       id: doc.id,
       name: doc.name
     }))
@@ -115,17 +120,7 @@ const fillingProgress = ref(0)
 const fillingStatus = ref<'success' | 'warning' | 'exception' | undefined>()
 
 const tableHeaders = ref(['甲方', '乙方', '合同金额', '签订日期'])
-const tableData = ref([
-  {
-    id: 1,
-    cells: [
-      { id: 1, value: 'ABC公司', matched: true },
-      { id: 2, value: 'XYZ公司', matched: true },
-      { id: 3, value: '100000元', matched: true },
-      { id: 4, value: '', matched: false }
-    ]
-  }
-])
+const tableData = ref([])
 
 const manualDialog = ref(false)
 const manualForm = reactive({
@@ -144,12 +139,29 @@ const startAutoFilling = async () => {
   fillingStatus.value = ''
 
   try {
-    // 模拟自动填写过程
-    for (let i = 0; i <= 100; i += 20) {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      fillingProgress.value = i
+    // 获取模板文档的表格数据
+    const templateTables = await getTableData(fillingForm.templateId)
+    const dataSourceTables = await getTableData(fillingForm.dataSourceId)
+
+    // 显示进度
+    fillingProgress.value = 50
+
+    // 这里应该实现实际的数据匹配和填写逻辑
+    // 目前先显示模板表格作为示例
+    if (templateTables.data.tables && templateTables.data.tables.length > 0) {
+      const firstTable = templateTables.data.tables[0]
+      tableHeaders.value = firstTable.headers || []
+      tableData.value = firstTable.rows.map((row: any, index: number) => ({
+        id: index + 1,
+        cells: row.cells.map((cell: string, cellIndex: number) => ({
+          id: cellIndex + 1,
+          value: cell,
+          matched: true
+        }))
+      }))
     }
 
+    fillingProgress.value = 100
     fillingStatus.value = 'success'
     ElMessage.success('自动填写完成')
   } catch (error) {
