@@ -4,10 +4,15 @@ import request from '@/utils/http'
  * 获取文档库
  * @returns 文档库列表
  */
-export function fetchDocLibs(): Promise<Array<Api.DocLib.DocLibInfo>> {
-  return request.get({
-    url: '/api/doc-lib'
-  })
+export async function fetchDocLibs(): Promise<Array<Api.DocLib.DocLibInfo>> {
+  const response = await request.get({ url: '/api/doc-lib' })
+  // 后端返回的是 { libs: [...] }，提取 libs 并转换字段
+  const libs = response.libs || []
+  return libs.map((item: any) => ({
+    libId: item.lib_id,
+    name: item.name,
+    belongsUserId: item.belongs_user_id
+  }))
 }
 
 /**
