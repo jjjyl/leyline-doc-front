@@ -33,6 +33,12 @@
  */
 
 declare namespace Api {
+  /** 通用响应基础结构 */
+  interface BaseResponse {
+    code?: number
+    msg?: string
+    data?: any
+  }
   /** 通用类型 */
   namespace Common {
     /** 分页参数 */
@@ -195,6 +201,13 @@ declare namespace Api {
     /** 完成上传返回 */
     interface FinishUploadResponse {
       docId: number
+    }
+  }
+  /** 表格类型 */
+  namespace Table {
+    interface TableInfo {
+      docId: number
+      table: any
     }
   }
 }
