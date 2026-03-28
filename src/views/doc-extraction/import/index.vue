@@ -92,7 +92,7 @@
         <el-table-column prop="status" label="状态" />
         <el-table-column label="操作" width="200">
           <template #default="scope">
-            <el-button size="small" @click="previewDocument(scope.row)">预览</el-button>
+            <el-button size="small" @click="previewDocument(scope.row)">编辑</el-button>
             <el-button size="small" type="danger" @click="deleteDocument(scope.row)"
               >删除</el-button
             >
@@ -133,7 +133,10 @@
   import * as docLibApi from '@/api/doc-lib'
   import * as docApi from '@/api/doc'
   import axios from 'axios'
-  import FileCardList from '@/views/doc-extraction/import/FireCardList.vue'
+  import { useUserStore } from '@/store/modules/user'
+
+  const userStore = useUserStore()
+  // import FileCardList from '@/views/doc-extraction/import/FireCardList.vue'
 
   // 文档列表（已导入的）
   const documents = ref([])
@@ -351,11 +354,22 @@
   // 预览文档
   const previewDocument = async (doc: any) => {
     try {
-      selectedDoc.value = doc
-      const response = await fetch(`/api/documents/${doc.id}/preview`)
-      const data = await response.json()
-      previewContent.value = data.content
-      previewDialog.value = true
+      // 获取当前用户的token（根据实际项目获取方式调整）
+      const token = userStore.accessToken
+      if (!token) {
+        ElMessage.error('未登录，无法预览')
+        return
+      }
+
+      // 构造WOPI预览URL
+      const wopiSrc = `http://192.168.0.136:36879/wopi/files/${doc.id}`
+      const previewUrl = `http://office.server.poyuan233.cn:8088/loleaflet/dist/loleaflet.html?WOPISrc=${encodeURIComponent(wopiSrc)}&access_token=${token}&lang=zh-CN`
+
+      // 方式1：直接在新窗口打开
+      window.open(previewUrl, '_blank')
+
+      // 方式2：如果希望在当前页面内嵌iframe，可以继续使用之前的dialog + iframe方案
+      // 这里为了简单，使用新窗口打开，避免iframe跨域或布局问题
     } catch (error) {
       ElMessage.error('预览失败')
     }
