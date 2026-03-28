@@ -73,8 +73,8 @@ declare namespace Api {
       name: string
       password: string
     }
-    // 注册请求参数
-    export interface RegisterParams {
+
+    interface RegisterParams {
       name: string
       password: string
       email: string
@@ -83,9 +83,7 @@ declare namespace Api {
     /** 登录响应 */
     interface LoginResponse {
       token: string
-      refresh_token: string
-      user_id: number
-      user_name: string
+      refreshToken: string
     }
 
     // /** 刷新token响应 */
@@ -105,6 +103,11 @@ declare namespace Api {
       userId?: number
       userName?: string
       avatar?: string
+    }
+    /** 修改密码 */
+    interface UpdatePasswordParams {
+      newPassword: string
+      oldPassword: string
     }
   }
 
@@ -321,6 +324,20 @@ declare namespace Api {
       int64 = 'int64',
       float64 = 'float64',
       bool = 'bool'
+    }
+  }
+  /**
+   * 文件夹详情
+   */
+  namespace Folder {
+    interface FolderInfo {
+      createdAt: string
+      id: number
+      libId: number
+      name: string
+      parentId: number
+      uploaderId: number
+      updateAt: string
     }
   }
 }
