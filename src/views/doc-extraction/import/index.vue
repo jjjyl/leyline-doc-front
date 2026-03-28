@@ -217,8 +217,8 @@
         const formData = new FormData()
         formData.append('file', file)
 
-        await axios.put(upload_url, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+        await axios.put(upload_url, file, {
+          headers: { 'Content-Type': 'application/octet-stream' },
           onUploadProgress: (e) => {
             if (e.total) {
               currentUploadProgress.value = Math.round((e.loaded / e.total) * 100)
