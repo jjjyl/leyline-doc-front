@@ -20,6 +20,28 @@
           />
         </el-select>
 
+        <!-- 编辑文档库按钮（移除权限限制） -->
+        <el-button
+          type="primary"
+          plain
+          :icon="Edit"
+          :disabled="!selectedLibId || uploadingActive"
+          @click="openEditLibDialog"
+        >
+          编辑
+        </el-button>
+
+        <!-- 删除文档库按钮 -->
+        <el-button
+          type="danger"
+          plain
+          :icon="Delete"
+          :disabled="!selectedLibId || uploadingActive"
+          @click="handleDeleteLib"
+        >
+          删除
+        </el-button>
+
         <el-button
           type="primary"
           plain
@@ -94,7 +116,7 @@
           <template #default="scope">
             <el-button size="small" @click="previewDocument(scope.row)">编辑</el-button>
             <el-button size="small" type="danger" @click="deleteDocument(scope.row)"
-              >删除</el-button
+            >删除</el-button
             >
           </template>
         </el-table-column>
@@ -124,12 +146,32 @@
       </span>
     </template>
   </el-dialog>
+
+  <!-- 编辑文档库对话框 -->
+  <el-dialog
+    v-model="showEditLibDialog"
+    title="编辑文档库"
+    width="30%"
+    @close="resetEditLibForm"
+  >
+    <el-form :model="editLibForm" :rules="editLibRules" ref="editLibFormRef">
+      <el-form-item label="文档库名称" prop="name">
+        <el-input v-model="editLibForm.name" placeholder="请输入文档库名称" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="showEditLibDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleEditLib" :loading="editingLib"> 确定 </el-button>
+      </span>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue'
+  import { ref, onMounted, watch, computed } from 'vue'
   import { ElMessage, ElMessageBox } from 'element-plus'
-  import { UploadFilled } from '@element-plus/icons-vue'
+  import { UploadFilled, Edit, Delete } from '@element-plus/icons-vue'
   import * as docLibApi from '@/api/doc-lib'
   import * as docApi from '@/api/doc'
   import axios from 'axios'
@@ -174,29 +216,125 @@
     ]
   }
 
-  // 重置表单
-  const resetCreateLibForm = () => {
-    createLibForm.value.name = ''
-    createLibFormRef.value?.clearValidate()
+  // 编辑文档库相关
+  const showEditLibDialog = ref(false)
+  const editingLib = ref(false)
+  const editLibForm = ref({
+    name: ''
+  })
+  const editLibFormRef = ref()
+  const currentEditLibId = ref<number | null>(null)
+  const editLibRules = {
+    name: [
+      { required: true, message: '请输入文档库名称', trigger: 'blur' },
+      { min: 1, max: 50, message: '长度在 1 到 50 个字符', trigger: 'blur' }
+    ]
+  }
+
+  // 打开编辑对话框
+  const openEditLibDialog = () => {
+    if (!selectedLibId.value) {
+      ElMessage.warning('请先选择要编辑的文档库')
+      return
+    }
+    const lib = libOptions.value.find(item => item.libId === selectedLibId.value)
+    if (lib) {
+      currentEditLibId.value = lib.libId
+      editLibForm.value.name = lib.name
+      showEditLibDialog.value = true
+    }
+  }
+
+  // 提交编辑
+  const handleEditLib = async () => {
+    if (!currentEditLibId.value) return
+    try {
+      await editLibFormRef.value.validate()
+      editingLib.value = true
+
+      await docLibApi.updateDocLib(currentEditLibId.value, editLibForm.value.name)
+
+      ElMessage.success('文档库更新成功')
+
+      showEditLibDialog.value = false
+
+      // 刷新文档库列表
+      await loadLibs()
+
+      // 保持选中当前编辑的文档库（如果还存在）
+      if (libOptions.value.some(lib => lib.libId === currentEditLibId.value)) {
+        selectedLibId.value = currentEditLibId.value
+      } else {
+        // 如果被删除或其他情况，选中第一个
+        selectedLibId.value = libOptions.value[0]?.libId || null
+      }
+
+      // 重新加载当前库的文档列表
+      await loadDocuments()
+    } catch (error) {
+      console.error('编辑文档库失败:', error)
+      ElMessage.error('编辑文档库失败，请重试')
+    } finally {
+      editingLib.value = false
+    }
+  }
+
+  // 删除文档库
+  const handleDeleteLib = async () => {
+    if (!selectedLibId.value) {
+      ElMessage.warning('请先选择要删除的文档库')
+      return
+    }
+
+    const libToDelete = libOptions.value.find(lib => lib.libId === selectedLibId.value)
+    if (!libToDelete) return
+
+    try {
+      await ElMessageBox.confirm(
+        `确定要删除文档库“${libToDelete.name}”吗？删除后该库下的所有文档也将被删除，此操作不可恢复。`,
+        '确认删除',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      )
+
+      await docLibApi.deleteDocLib(selectedLibId.value)
+
+      ElMessage.success('文档库删除成功')
+
+      // 刷新文档库列表
+      await loadLibs()
+
+      // 如果还有文档库，选中第一个；否则清空选中并清空文档列表
+      if (libOptions.value.length > 0) {
+        selectedLibId.value = libOptions.value[0].libId
+        await loadDocuments()
+      } else {
+        selectedLibId.value = null
+        documents.value = []
+        ElMessage.info('已无文档库，请先创建')
+      }
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('删除文档库失败:', error)
+        ElMessage.error('删除文档库失败，请重试')
+      }
+    }
   }
 
   // 监听文档库变化
   watch(selectedLibId, (newVal) => {
     if (newVal) {
       loadDocuments()
+    } else {
+      documents.value = []
     }
   })
 
   // 失败文件记录
   const failedFiles = ref<{ name: string; error: string }[]>([])
-
-  // // 文件格式和大小限制
-  // const FILE_SIZE_LIMITS = {
-  //   docx: 500 * 1024, // 500KB
-  //   xlsx: 500 * 1024, // 500KB
-  //   md: 15 * 1024, // 15KB
-  //   txt: 15 * 1024 // 15KB
-  // }
 
   const SUPPORTED_FORMATS = ['docx', 'xlsx', 'md', 'txt']
 
@@ -207,13 +345,6 @@
       ElMessage.error(`不支持的文件格式：${fileType}。支持格式：${SUPPORTED_FORMATS.join(', ')}`)
       return false
     }
-
-    // const sizeLimit = FILE_SIZE_LIMITS[fileType as keyof typeof FILE_SIZE_LIMITS]
-    // if (file.size < sizeLimit) {
-    //   ElMessage.error(`${fileType}文件大小不能小于${sizeLimit / 1024}KB`)
-    //   return false
-    // }
-
     return true
   }
 
@@ -240,8 +371,6 @@
         })
         .catch(() => {
           // 取消切换，恢复原值
-          // 这里简单处理：重新设置为原值需要记录原值，较复杂，不做深度处理
-          // 实际项目中可以记录之前的 libId，这里为了简化，重新加载当前库的文档
           loadDocuments()
         })
     } else {
@@ -253,7 +382,6 @@
   const uploadSingleFile = (file: File, libId: number): Promise<void> => {
     return new Promise(async (resolve, reject) => {
       try {
-        // 1. 创建上传会话
         const sessionParams: Api.Doc.CreateUploadSessionRequest = {
           file_name: file.name,
           file_size: file.size,
@@ -267,10 +395,6 @@
 
         const { doc_id, upload_url } = sessionData
 
-        // 2. 上传文件到预签名URL
-        const formData = new FormData()
-        formData.append('file', file)
-
         await axios.put(upload_url, file, {
           headers: { 'Content-Type': 'application/octet-stream' },
           onUploadProgress: (e) => {
@@ -280,7 +404,6 @@
           }
         })
 
-        // 3. 完成上传
         await docApi.finishUpload(doc_id)
 
         resolve()
@@ -291,9 +414,8 @@
     })
   }
 
-  // 确认上传：遍历缓存文件列表，逐个上传
+  // 确认上传
   const confirmUpload = async () => {
-    // 校验是否选择了文档库
     if (!selectedLibId.value) {
       ElMessage.warning('请先选择文档库')
       return
@@ -304,16 +426,13 @@
       return
     }
 
-    // 准备上传
     uploadingActive.value = true
     failedFiles.value = []
     uploadedCount.value = 0
     totalUploadCount.value = fileList.value.length
 
-    // 获取所有原始文件对象
     const filesToUpload = fileList.value.map((item) => item.raw)
 
-    // 逐个上传
     for (let i = 0; i < filesToUpload.length; i++) {
       const file = filesToUpload[i]
       currentUploadFileName.value = file.name
@@ -330,12 +449,10 @@
       }
     }
 
-    // 上传完成处理
     uploadingActive.value = false
     currentUploadFileName.value = ''
     currentUploadProgress.value = 0
 
-    // 汇总结果
     if (failedFiles.value.length === 0) {
       ElMessage.success(`全部 ${totalUploadCount.value} 个文件上传成功`)
     } else {
@@ -344,32 +461,22 @@
       )
     }
 
-    // 清空文件缓存
     clearFileList()
-
-    // 刷新文档列表
     await loadDocuments()
   }
 
   // 预览文档
   const previewDocument = async (doc: any) => {
     try {
-      // 获取当前用户的token（根据实际项目获取方式调整）
       const token = userStore.accessToken
       if (!token) {
         ElMessage.error('未登录，无法预览')
         return
       }
 
-      // 构造WOPI预览URL
       const wopiSrc = `http://192.168.0.136:36879/wopi/files/${doc.id}`
       const previewUrl = `http://office.server.poyuan233.cn:8088/loleaflet/dist/loleaflet.html?WOPISrc=${encodeURIComponent(wopiSrc)}&access_token=${token}&lang=zh-CN`
-
-      // 方式1：直接在新窗口打开
       window.open(previewUrl, '_blank')
-
-      // 方式2：如果希望在当前页面内嵌iframe，可以继续使用之前的dialog + iframe方案
-      // 这里为了简单，使用新窗口打开，避免iframe跨域或布局问题
     } catch (error) {
       ElMessage.error('预览失败')
     }
@@ -397,7 +504,7 @@
   // 加载文档列表
   const loadDocuments = async () => {
     if (!selectedLibId.value) return
-    documents.value = [] // 清空旧数据
+    documents.value = []
     try {
       const response = await docApi.getDocList(parentId.value, selectedLibId.value)
       documents.value = response.docs || []
@@ -412,8 +519,13 @@
       const libList = await docLibApi.fetchDocLibs()
       libOptions.value = libList || []
       if (libOptions.value.length > 0) {
-        selectedLibId.value = libOptions.value[0]?.lib_id || null
+        if (selectedLibId.value && libOptions.value.some(lib => lib.libId === selectedLibId.value)) {
+          // 保持当前选中
+        } else {
+          selectedLibId.value = libOptions.value[0]?.libId || null
+        }
       } else {
+        selectedLibId.value = null
         ElMessage.warning('暂无文档库，请先创建文档库')
       }
     } catch (error) {
@@ -428,31 +540,21 @@
       creatingLib.value = true
 
       const res = await docLibApi.docLibCreate(createLibForm.value.name)
-      // 假设接口返回的数据结构为 { lib_id: number } 或 { data: { lib_id } }
       const newLibId = res.lib_id || res.data?.lib_id
 
       ElMessage.success('文档库创建成功')
 
-      // 关闭对话框
       showCreateLibDialog.value = false
 
-      // 刷新文档库列表
       await loadLibs()
 
-      // 如果返回了新库的ID，自动选中它
       if (newLibId) {
         selectedLibId.value = newLibId
-      } else {
-        // 否则选中列表中的第一个（如果有）
-        if (libOptions.value.length > 0) {
-          selectedLibId.value = libOptions.value[0].libId
-        }
+      } else if (libOptions.value.length > 0) {
+        selectedLibId.value = libOptions.value[0].libId
       }
 
-      // 清空文件缓存（可选）
       clearFileList()
-
-      // 重新加载当前库的文档列表
       await loadDocuments()
     } catch (error) {
       console.error('创建文档库失败:', error)
