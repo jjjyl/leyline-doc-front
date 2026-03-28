@@ -35,7 +35,7 @@ export function finishUpload(docId: number) {
 export function getDocList(parentId: number, libId: number) {
   return request.get<Array<Api.Doc.DocInfo>>({
     url: '/api/doc',
-    data: {
+    params: {
       parent_id: parentId,
       lib_id: libId
     }
