@@ -65,7 +65,6 @@
   import * as docLibApi from '@/api/doc-lib'
   import * as docApi from '@/api/doc'
   import axios from 'axios'
-  import { getDocumentList } from '@/api/doc' // 导入真实的API接口
 
   const documents = ref([])
 
@@ -165,9 +164,9 @@
   // 加载文档列表
   const loadDocuments = async () => {
     try {
-      const response = await fetch('/api/documents')
-      const data = await response.json()
-      documents.value = data.list || []
+      const response = await docApi.getDocList(parentId.value, libId.value)
+      const data = response.docs
+      documents.value = data || []
     } catch (error) {
       ElMessage.error('获取文档列表失败')
     }
@@ -184,18 +183,12 @@
 
     try {
       // ==========================================
-      // 1. 获取文档库（你自己替换接口地址）
-      // ==========================================
-      const libList = await docLibApi.fetchDocLibs()
-      const lib_id = libList[0]?.lib_id || 1 // 取第一个文档库
-
-      // ==========================================
       // 2. 创建上传会话
       // ==========================================
       const sessionParams: Api.Doc.CreateUploadSessionRequest = {
         file_name: file.name,
         file_size: file.size,
-        lib_id: lib_id,
+        lib_id: libId.value,
         parent_id: 0,
         type: file.type || 'file'
       }
