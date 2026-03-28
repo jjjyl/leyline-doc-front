@@ -167,10 +167,14 @@ declare namespace Api {
   namespace Doc {
     /** 文档参数 */
     interface DocInfo {
+      id: number
+      libId: number
       name: string
-      size: number
       parentId: number
+      path: string
+      status: string
       type: string
+      uploaderId: number
     }
 
     /** 创建上传会话参数 */

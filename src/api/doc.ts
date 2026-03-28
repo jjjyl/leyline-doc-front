@@ -26,6 +26,33 @@ export function finishUpload(docId: number) {
   })
 }
 
+/**
+ * 列出文件列表
+ * @param parentId 完成上传参数
+ * @param libId 文档库id
+ * @returns 文档列表
+ */
+export function getDocList(parentId: number, libId: number) {
+  return request.get<Array<Api.Doc.DocInfo>>({
+    url: '/api/doc',
+    data: {
+      parent_id: parentId,
+      lib_id: libId
+    }
+  })
+}
+
+/**
+ * 删除文档
+ * @param docId 完成上传参数
+ * @returns 删除结果
+ */
+export function deleteDoc(docId: number) {
+  return request.del<string>({
+    url: `/api/doc/${docId}`
+  })
+}
+
 // /**
 //  * 提取表格Schema
 //  * @param docId 文档ID

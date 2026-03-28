@@ -74,6 +74,8 @@
   const selectedDoc = ref(null)
 
   const fileList = ref<any[]>([])
+  const parentId = ref<number>(0)
+  const libId = ref<number>(1)
 
   // 状态
   const fileInputRef = ref<HTMLInputElement>()
@@ -148,7 +150,8 @@
       })
 
       // 调用API删除文档
-      await fetch(`/api/documents/${doc.id}`, { method: 'DELETE' })
+      const res = await docApi.deleteDoc(doc.id)
+      console.log(res)
       ElMessage.success('删除成功')
       // 重新获取文档列表
       await loadDocuments()
@@ -162,8 +165,9 @@
   // 加载文档列表
   const loadDocuments = async () => {
     try {
-      const response = await getDocumentList()
-      documents.value = response.data.list || []
+      const response = await fetch('/api/documents')
+      const data = await response.json()
+      documents.value = data.list || []
     } catch (error) {
       ElMessage.error('获取文档列表失败')
     }
@@ -244,8 +248,10 @@
   }
 
   // 组件挂载时加载文档列表
-  onMounted(() => {
-    loadDocuments()
+  onMounted(async () => {
+    const libList = await docLibApi.fetchDocLibs()
+    libId.value = libList[0]?.lib_id || 1 // 取第一个文档库
+    await loadDocuments()
   })
 </script>
 
