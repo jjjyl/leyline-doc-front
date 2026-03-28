@@ -22,6 +22,15 @@
 
         <el-button
           type="primary"
+          plain
+          @click="showCreateLibDialog = true"
+          :disabled="uploadingActive"
+        >
+          新建文档库
+        </el-button>
+
+        <el-button
+          type="primary"
           @click="confirmUpload"
           :loading="uploadingActive"
           :disabled="!selectedLibId || fileList.length === 0"
@@ -54,6 +63,7 @@
         <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
         <div v-if="!uploadingActive">
           <div class="el-upload__text">将文件拖到此处，或 <em>点击上传</em></div>
+          <!-- 自定义文件卡片列表 -->
         </div>
         <div v-else class="progress-container">
           <p>正在上传: {{ currentUploadFileName }}</p>
@@ -65,12 +75,13 @@
         </div>
         <template #tip>
           <div class="el-upload__tip">
-            支持 docx(≥500KB)、md(≥15KB)、xlsx(≥500KB)、txt(≥15KB) 格式，
-            请先选择文档库，再添加文件，最后点击【确认上传】
+            支持 docx、md、xlsx、txt 格式， 请先选择文档库，再添加文件，最后点击【确认上传】
           </div>
         </template>
       </el-upload>
     </div>
+
+
 
     <div class="mb-4">
       <h3 class="text-lg font-semibold mb-2">已导入文档</h3>
@@ -94,6 +105,25 @@
       <div v-html="previewContent"></div>
     </el-dialog>
   </div>
+  <!-- 新建文档库对话框 -->
+  <el-dialog
+    v-model="showCreateLibDialog"
+    title="新建文档库"
+    width="30%"
+    @close="resetCreateLibForm"
+  >
+    <el-form :model="createLibForm" :rules="createLibRules" ref="createLibFormRef">
+      <el-form-item label="文档库名称" prop="name">
+        <el-input v-model="createLibForm.name" placeholder="请输入文档库名称" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="showCreateLibDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleCreateLib" :loading="creatingLib"> 确定 </el-button>
+      </span>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
@@ -103,6 +133,7 @@
   import * as docLibApi from '@/api/doc-lib'
   import * as docApi from '@/api/doc'
   import axios from 'axios'
+  import FileCardList from '@/views/doc-extraction/import/FireCardList.vue'
 
   // 文档列表（已导入的）
   const documents = ref([])
@@ -125,6 +156,26 @@
   const currentUploadProgress = ref(0)
   const uploadedCount = ref(0)
   const totalUploadCount = ref(0)
+
+  // 新建文档库相关
+  const showCreateLibDialog = ref(false)
+  const creatingLib = ref(false)
+  const createLibForm = ref({
+    name: ''
+  })
+  const createLibFormRef = ref()
+  const createLibRules = {
+    name: [
+      { required: true, message: '请输入文档库名称', trigger: 'blur' },
+      { min: 1, max: 50, message: '长度在 1 到 50 个字符', trigger: 'blur' }
+    ]
+  }
+
+  // 重置表单
+  const resetCreateLibForm = () => {
+    createLibForm.value.name = ''
+    createLibFormRef.value?.clearValidate()
+  }
 
   // 监听文档库变化
   watch(selectedLibId, (newVal) => {
@@ -353,6 +404,56 @@
       }
     } catch (error) {
       ElMessage.error('获取文档库列表失败')
+    }
+  }
+
+  // 新建文档库
+  const handleCreateLib = async () => {
+    try {
+      await createLibFormRef.value.validate()
+      creatingLib.value = true
+
+      const res = await docLibApi.docLibCreate(createLibForm.value.name)
+      // 假设接口返回的数据结构为 { lib_id: number } 或 { data: { lib_id } }
+      const newLibId = res.lib_id || res.data?.lib_id
+
+      ElMessage.success('文档库创建成功')
+
+      // 关闭对话框
+      showCreateLibDialog.value = false
+
+      // 刷新文档库列表
+      await loadLibs()
+
+      // 如果返回了新库的ID，自动选中它
+      if (newLibId) {
+        selectedLibId.value = newLibId
+      } else {
+        // 否则选中列表中的第一个（如果有）
+        if (libOptions.value.length > 0) {
+          selectedLibId.value = libOptions.value[0].libId
+        }
+      }
+
+      // 清空文件缓存（可选）
+      clearFileList()
+
+      // 重新加载当前库的文档列表
+      await loadDocuments()
+    } catch (error) {
+      console.error('创建文档库失败:', error)
+      ElMessage.error('创建文档库失败，请重试')
+    } finally {
+      creatingLib.value = false
+    }
+  }
+
+  // 移除单个文件
+  const removeFile = (file: any) => {
+    const index = fileList.value.findIndex(f => f.uid === file.uid)
+    if (index !== -1) {
+      fileList.value.splice(index, 1)
+      ElMessage.info(`已移除文件: ${file.name}`)
     }
   }
 

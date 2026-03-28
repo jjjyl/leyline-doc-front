@@ -32,3 +32,17 @@ export function fetchGetUserInfo() {
     // }
   })
 }
+
+/**
+ * 获取用户信息
+ * @returns 用户信息
+ */
+export function logout() {
+  return request.post({
+    url: '/api/auth/logout'
+    // 自定义请求头
+    // headers: {
+    //   'X-Custom-Header': 'your-custom-value'
+    // }
+  })
+}
