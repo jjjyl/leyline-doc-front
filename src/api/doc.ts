@@ -26,6 +26,22 @@ export function finishUpload(docId: number) {
   })
 }
 
+/**
+ * 列出文件列表
+ * @param parentId 完成上传参数
+ * @param libId 文档库id
+ * @returns 文档列表
+ */
+export function getDocList(parentId: number, libId: number) {
+  return request.get<Array<Api.Doc.DocInfo>>({
+    url: '/api/doc',
+    data: {
+      parent_id: parentId,
+      lib_id: libId
+    }
+  })
+}
+
 // /**
 //  * 提取表格Schema
 //  * @param docId 文档ID
