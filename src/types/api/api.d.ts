@@ -88,13 +88,22 @@ declare namespace Api {
       user_name: string
     }
 
+    // /** 刷新token响应 */
+    // interface RefreshTokenResponse {
+    //   token: string
+    //   refresh_token: string
+    // }
+
     /** 用户信息 */
     interface UserInfo {
-      buttons: string[]
-      roles: string[]
-      userId: number
-      userName: string
       email: string
+      name: string
+      user_id: number
+      // 前端扩展字段
+      buttons?: string[]
+      roles?: string[]
+      userId?: number
+      userName?: string
       avatar?: string
     }
   }
@@ -157,8 +166,19 @@ declare namespace Api {
     }
 
     export interface DocLibsResponse {
-      belongsUserId: number
-      libId: number
+      belongs_user_id: number
+      lib_id: number
+      name: string
+    }
+
+    /** 创建文档库响应 */
+    interface CreateDocLibResponse {
+      lib_id: number
+    }
+
+    /** 更新文档库请求 */
+    interface UpdateDocLibRequest {
+      lib_id: number
       name: string
     }
   }
@@ -246,6 +266,61 @@ declare namespace Api {
     interface generateTableResponse {
       docId: number
       status: number
+    }
+
+    // 后端API响应类型
+    interface ExtractTableSchemaResponse {
+      doc_id: number
+      schemas: TableSchema[]
+    }
+
+    interface ExtractTableDataResponse {
+      doc_id: number
+      tables: TableFormat[]
+    }
+
+    interface GenerateTableResponse {
+      doc_id: number
+      status: string
+    }
+
+    interface GetTablesResponse {
+      doc_id: number
+      tables: TableFormat[]
+    }
+
+    interface TableFormat {
+      col_count: number
+      comment: string
+      headers: string[]
+      name: string
+      row_count: number
+      rows: TableRow[]
+    }
+
+    interface TableRow {
+      cells: string[]
+    }
+
+    interface TableSchema {
+      comment: string
+      fields: TableField[]
+      name: string
+      primary_key: string
+    }
+
+    interface TableField {
+      description: string
+      name: string
+      required: boolean
+      type: FiledType
+    }
+
+    enum FiledType {
+      string = 'string',
+      int64 = 'int64',
+      float64 = 'float64',
+      bool = 'bool'
     }
   }
 }

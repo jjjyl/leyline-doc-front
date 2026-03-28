@@ -14,7 +14,6 @@ document.addEventListener(
   function () {},
   { passive: false }
 )
-
 const app = createApp(App)
 initStore(app)
 initRouter(app)

@@ -113,7 +113,8 @@
   import { useI18n } from 'vue-i18n'
   import { HttpError } from '@/utils/http/error'
   import { fetchLogin } from '@/api/auth'
-  import { ElNotification, type FormInstance, type FormRules } from 'element-plus'
+  import { fetchGetUserInfo } from '@/api/user'
+  import { ElNotification, ElMessage, type FormInstance, type FormRules } from 'element-plus'
   import { useSettingStore } from '@/store/modules/setting'
 
   defineOptions({ name: 'Login' })
@@ -216,12 +217,10 @@
 
       loading.value = true
 
-      // 登录请求
-      const { username, password } = formData
-
-      const { refresh_token, token, user_id, user_name } = await fetchLogin({
-        name: username,
-        password
+      // 模拟登录请求
+      const { token, refresh_token } = await fetchLogin({
+        name: formData.username,
+        password: formData.password
       })
 
       console.log(refresh_token)
@@ -235,6 +234,15 @@
       userStore.setToken(token, refresh_token)
       userStore.setLoginStatus(true)
 
+      // 获取用户信息
+      try {
+        const userInfo = await fetchGetUserInfo()
+        userStore.setUserInfo(userInfo)
+      } catch (error) {
+        console.error('获取用户信息失败:', error)
+        // 可以选择继续登录流程或抛出错误
+      }
+
       // 登录成功处理
       showLoginSuccessNotice()
 
@@ -244,10 +252,11 @@
     } catch (error) {
       // 处理 HttpError
       if (error instanceof HttpError) {
-        // console.log(error.code)
+        // 显示具体的错误信息
+        ElMessage.error(error.message || '登录失败，请检查用户名和密码')
       } else {
         // 处理非 HttpError
-        // ElMessage.error('登录失败，请稍后重试')
+        ElMessage.error('登录失败，请稍后重试')
         console.error('[Login] Unexpected error:', error)
       }
     } finally {

@@ -92,7 +92,7 @@
         <el-table-column prop="status" label="状态" />
         <el-table-column label="操作" width="200">
           <template #default="scope">
-            <el-button size="small" @click="previewDocument(scope.row)">编辑</el-button>
+            <el-button size="small" @click="previewDocument(scope.row)">预览</el-button>
             <el-button size="small" type="danger" @click="deleteDocument(scope.row)"
               >删除</el-button
             >
