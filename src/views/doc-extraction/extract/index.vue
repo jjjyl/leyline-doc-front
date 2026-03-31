@@ -156,6 +156,8 @@
 
     try {
       const res = await tableApi.extractTableData(extractForm.documentId)
+      ElMessage.success('提取成功')
+      await catchHistory()
     } catch (error) {
       progressStatus.value = 'exception'
       ElMessage.error('提取失败', error)
