@@ -103,20 +103,34 @@
       </el-upload>
     </div>
 
-
-
     <div class="mb-4">
       <h3 class="text-lg font-semibold mb-2">已导入文档</h3>
       <el-table :data="documents" style="width: 100%">
         <el-table-column prop="name" label="文件名" />
         <el-table-column prop="size" label="大小" />
-        <el-table-column prop="type" label="类型" />
-        <el-table-column prop="status" label="状态" />
+        <el-table-column prop="type" label="类型">
+          <template #default="{ row }">
+            <span>{{ typeMap[row.type] || row.type }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="status" label="状态">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'normal' ? 'success' : 'info'">
+              {{ statusMap[row.status] || row.status }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="hasTable" label="是否已有表格">
+          <template #default="{ row }">
+            {{ row.hasTable ? '是' : '否' }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="200">
           <template #default="scope">
             <el-button size="small" @click="previewDocument(scope.row)">预览</el-button>
             <el-button size="small" type="danger" @click="deleteDocument(scope.row)"
-            >删除</el-button
+              >删除</el-button
             >
           </template>
         </el-table-column>
@@ -148,12 +162,7 @@
   </el-dialog>
 
   <!-- 编辑文档库对话框 -->
-  <el-dialog
-    v-model="showEditLibDialog"
-    title="编辑文档库"
-    width="30%"
-    @close="resetEditLibForm"
-  >
+  <el-dialog v-model="showEditLibDialog" title="编辑文档库" width="30%" @close="resetEditLibForm">
     <el-form :model="editLibForm" :rules="editLibRules" ref="editLibFormRef">
       <el-form-item label="文档库名称" prop="name">
         <el-input v-model="editLibForm.name" placeholder="请输入文档库名称" />
@@ -202,6 +211,40 @@
   const uploadedCount = ref(0)
   const totalUploadCount = ref(0)
 
+  // 定义映射函数
+  const mapDocFromBackend = (backendDoc: any): Api.Doc.DocInfo => {
+    return {
+      id: backendDoc.id,
+      libId: backendDoc.lib_id,
+      name: backendDoc.name,
+      parentId: backendDoc.parent_id,
+      path: backendDoc.path,
+      status: backendDoc.status,
+      type: backendDoc.type,
+      uploaderId: backendDoc.uploader_id,
+      hasTable: backendDoc.has_table
+    }
+  }
+
+  // 状态映射
+  const statusMap: Record<string, string> = {
+    normal: '正常',
+    deleted: '已删除',
+    processing: '处理中',
+    failed: '失败'
+    // 根据实际后端返回的状态补充
+  }
+
+  // 类型映射（如文件类型或文档类型）
+  const typeMap: Record<string, string> = {
+    file: '文件',
+    dir: '文件夹',
+    txt: '文本文件',
+    docx: 'Word文档',
+    xlsx: 'Excel表格'
+    // 根据实际后端返回的类型补充
+  }
+
   // 新建文档库相关
   const showCreateLibDialog = ref(false)
   const creatingLib = ref(false)
@@ -237,7 +280,7 @@
       ElMessage.warning('请先选择要编辑的文档库')
       return
     }
-    const lib = libOptions.value.find(item => item.libId === selectedLibId.value)
+    const lib = libOptions.value.find((item) => item.libId === selectedLibId.value)
     if (lib) {
       currentEditLibId.value = lib.libId
       editLibForm.value.name = lib.name
@@ -262,7 +305,7 @@
       await loadLibs()
 
       // 保持选中当前编辑的文档库（如果还存在）
-      if (libOptions.value.some(lib => lib.libId === currentEditLibId.value)) {
+      if (libOptions.value.some((lib) => lib.libId === currentEditLibId.value)) {
         selectedLibId.value = currentEditLibId.value
       } else {
         // 如果被删除或其他情况，选中第一个
@@ -286,7 +329,7 @@
       return
     }
 
-    const libToDelete = libOptions.value.find(lib => lib.libId === selectedLibId.value)
+    const libToDelete = libOptions.value.find((lib) => lib.libId === selectedLibId.value)
     if (!libToDelete) return
 
     try {
@@ -502,12 +545,18 @@
   }
 
   // 加载文档列表
+  // 在loadDocuments中使用
   const loadDocuments = async () => {
     if (!selectedLibId.value) return
     documents.value = []
     try {
       const response = await docApi.getDocList(parentId.value, selectedLibId.value)
-      documents.value = response.docs || []
+      // 假设response.docs是后端返回的数组
+      if (response.docs && Array.isArray(response.docs)) {
+        documents.value = response.docs.map(mapDocFromBackend)
+      } else {
+        documents.value = []
+      }
     } catch (error) {
       ElMessage.error('获取文档列表失败')
     }
@@ -519,7 +568,10 @@
       const libList = await docLibApi.fetchDocLibs()
       libOptions.value = libList || []
       if (libOptions.value.length > 0) {
-        if (selectedLibId.value && libOptions.value.some(lib => lib.libId === selectedLibId.value)) {
+        if (
+          selectedLibId.value &&
+          libOptions.value.some((lib) => lib.libId === selectedLibId.value)
+        ) {
           // 保持当前选中
         } else {
           selectedLibId.value = libOptions.value[0]?.libId || null
@@ -566,7 +618,7 @@
 
   // 移除单个文件
   const removeFile = (file: any) => {
-    const index = fileList.value.findIndex(f => f.uid === file.uid)
+    const index = fileList.value.findIndex((f) => f.uid === file.uid)
     if (index !== -1) {
       fileList.value.splice(index, 1)
       ElMessage.info(`已移除文件: ${file.name}`)

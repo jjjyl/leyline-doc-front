@@ -198,6 +198,7 @@ declare namespace Api {
       status: string
       type: string
       uploaderId: number
+      hasTable: boolean
     }
 
     /** 创建上传会话参数 */
