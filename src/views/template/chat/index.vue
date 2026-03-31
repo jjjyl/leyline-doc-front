@@ -1,153 +1,130 @@
-<!-- 聊天页 -->
+<!-- AI 智能对话页面 -->
 <template>
-  <div class="page-content flex !p-0 max-md:flex-col" :style="{ height: containerMinHeight }">
-    <ElRow>
-      <ElCol :span="12">
-        <div class="grid-content ep-bg-purple" />
-      </ElCol>
-      <ElCol :span="12">
-        <div class="grid-content ep-bg-purple-light" />
-      </ElCol>
-    </ElRow>
-    <div
-      class="box-border w-90 h-full p-5 border-r border-g-300 max-md:w-full max-md:h-42 max-md:border-r-0"
-    >
-      <div class="pb-5 max-md:!hidden">
-        <div class="flex-c gap-3">
-          <ElAvatar :size="50" :src="selectedPerson?.avatar" />
-          <div>
-            <div class="text-base font-medium">{{ selectedPerson?.name }}</div>
-            <div class="mt-1 text-xs text-g-500">{{ selectedPerson?.email }}</div>
-          </div>
+  <div class="chat-page">
+    <!-- 左侧边栏 -->
+    <div class="sidebar">
+      <div class="ai-profile">
+        <div class="avatar-wrapper">
+          <ElAvatar :size="80" :src="aiInfo.avatar" />
+          <span class="online-dot" :class="{ online: aiInfo.isOnline }"></span>
         </div>
-        <div class="mt-3">
-          <ElInput v-model="searchQuery" placeholder="搜索联系人" prefix-icon="Search" clearable />
+        <h2 class="ai-name">{{ aiInfo.name }}</h2>
+        <ElTag size="small" type="primary" effect="plain" round class="mt-2"> AI 智能助手 </ElTag>
+        <p class="ai-desc">{{ aiInfo.description }}</p>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">AI 能力</h3>
+        <div class="ability-tags">
+          <ElTag v-for="(ability, idx) in aiInfo.abilities" :key="idx" size="small" round>
+            {{ ability }}
+          </ElTag>
         </div>
-        <ElDropdown trigger="click" placement="bottom-start">
-          <span class="mt-5 c-p">
-            排序方式
-            <ElIcon class="el-icon--right">
-              <arrow-down />
+      </div>
+
+      <div class="section flex-1 overflow-hidden">
+        <h3 class="section-title">推荐提问</h3>
+        <div class="suggestions">
+          <div
+            v-for="(suggestion, idx) in suggestions"
+            :key="idx"
+            class="suggestion-item"
+            @click="handleSuggestionClick(suggestion)"
+          >
+            <ElIcon class="icon">
+              <ChatDotRound />
             </ElIcon>
-          </span>
-          <template #dropdown>
-            <ElDropdownMenu>
-              <ElDropdownItem>按时间排序</ElDropdownItem>
-              <ElDropdownItem>按名称排序</ElDropdownItem>
-              <ElDropdownItem>全部标为已读</ElDropdownItem>
-            </ElDropdownMenu>
-          </template>
-        </ElDropdown>
-      </div>
-      <ElScrollbar>
-        <div
-          v-for="item in personList"
-          :key="item.id"
-          class="flex-c p-3 c-p rounded-lg tad-200 hover:bg-active-color/30 mb-1"
-          :class="{ 'bg-active-color': selectedPerson?.id === item.id }"
-          @click="selectPerson(item)"
-        >
-          <div class="relative mr-3">
-            <ElAvatar :size="40" :src="item.avatar">
-              {{ item.name.charAt(0) }}
-            </ElAvatar>
-            <div
-              class="absolute right-1 bottom-1 size-2 rounded-full"
-              :class="item.online ? 'bg-success/100' : 'bg-error/100'"
-            ></div>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex-cb mb-1">
-              <span class="text-sm font-medium">{{ item.name }}</span>
-              <span class="text-xs text-g-600">{{ item.lastTime }}</span>
-            </div>
-            <div class="flex-cb">
-              <span class="overflow-hidden text-xs text-g-600 text-ellipsis whitespace-nowrap">{{
-                item.email
-              }}</span>
-            </div>
+            <span>{{ suggestion }}</span>
           </div>
         </div>
-      </ElScrollbar>
+      </div>
     </div>
-    <div class="box-border flex-1 h-full max-md:h-[calc(70%-30px)]">
-      <div class="flex-cb pt-4 px-4 pb-0 mb-5">
-        <div>
-          <span class="text-base font-medium">Art Bot</span>
-          <div class="flex-c gap-1 mt-1.5">
-            <div
-              class="w-2 h-2 rounded-full"
-              :class="isOnline ? 'bg-success/100' : 'bg-danger/100'"
-            ></div>
-            <span class="text-xs text-g-600">{{ isOnline ? '在线' : '离线' }}</span>
+
+    <!-- 主聊天区域 -->
+    <div class="main-chat">
+      <!-- 顶部栏 -->
+      <div class="chat-header">
+        <div class="header-left">
+          <ElAvatar :size="36" :src="aiInfo.avatar" />
+          <div class="header-info">
+            <div class="header-name">
+              <span>{{ aiInfo.name }}</span>
+              <ElTag size="small" type="success" effect="light">在线</ElTag>
+            </div>
+            <div class="header-status">前面的区域，现在就来探索吧！</div>
           </div>
         </div>
-        <div class="flex-c gap-2">
-          <ArtIconButton icon="ri:phone-line" circle class="size-11 text-g-600" />
-          <ArtIconButton icon="ri:video-on-line" circle class="size-11 text-g-600" />
-          <ArtIconButton icon="ri:more-2-fill" circle class="size-11 text-g-600" />
+        <div class="header-actions">
+          <ElButton circle plain @click="clearChatHistory" title="清空记录">
+            <ElIcon>
+              <Delete />
+            </ElIcon>
+          </ElButton>
         </div>
       </div>
-      <div class="flex flex-col h-[calc(100%-85px)]">
-        <!-- 聊天消息区域 -->
+
+      <!-- 消息列表 -->
+      <div class="message-list" ref="messageContainer">
         <div
-          class="flex-1 py-7.5 px-4 overflow-y-auto border-t-d [&::-webkit-scrollbar]:!w-1"
-          ref="messageContainer"
+          v-for="message in messages"
+          :key="message.id"
+          :class="['message', message.isMe ? 'message-me' : 'message-ai']"
         >
-          <template v-for="message in messages" :key="message.id">
-            <div
-              :class="[
-                'flex gap-2 items-start w-full mb-7.5',
-                message.isMe ? 'flex-row-reverse' : 'flex-row justify-start'
-              ]"
-            >
-              <ElAvatar :size="32" :src="message.avatar" class="flex-shrink-0" />
-              <div
-                class="flex flex-col max-w-[70%]"
-                :class="message.isMe ? 'items-end' : 'items-start'"
-              >
-                <div
-                  class="flex gap-2 mb-1 text-xs"
-                  :class="message.isMe ? 'flex-row-reverse' : 'flex-row'"
-                >
-                  <span class="font-medium">{{ message.sender }}</span>
-                  <span class="text-g-600">{{ message.time }}</span>
+          <ElAvatar :size="40" :src="message.avatar" class="avatar" />
+          <div class="message-body">
+            <div class="message-sender">{{ message.sender }}</div>
+            <div class="message-time">{{ message.time }}</div>
+            <div :class="['message-bubble', message.isMe ? 'bubble-me' : 'bubble-ai']">
+              <template v-if="message.isThinking">
+                <div class="thinking-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
                 </div>
-                <div
-                  class="py-2.5 px-3.5 text-sm leading-[1.4] rounded-md"
-                  :class="message.isMe ? '!bg-theme/15' : '!bg-active-color'"
-                  >{{ message.content }}</div
-                >
-              </div>
+              </template>
+              <template v-else>
+                <div class="message-text">{{ message.content }}</div>
+              </template>
             </div>
-          </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- 输入区域 -->
+      <div class="input-area">
+        <div v-if="messages.length <= 1" class="quick-suggestions">
+          <ElTag
+            v-for="(suggestion, idx) in quickSuggestions"
+            :key="idx"
+            size="small"
+            effect="plain"
+            round
+            class="quick-tag"
+            @click="handleSuggestionClick(suggestion)"
+          >
+            {{ suggestion }}
+          </ElTag>
         </div>
 
-        <!-- 聊天输入区域 -->
-        <div class="p-4">
+        <div class="input-wrapper">
           <ElInput
             v-model="messageText"
             type="textarea"
             :rows="3"
-            placeholder="输入消息"
+            placeholder="向 AI 提问... (Ctrl+Enter 发送)"
             resize="none"
-            @keyup.enter.prevent="sendMessage"
-          >
-            <template #append>
-              <div class="flex gap-2 py-2">
-                <ElButton :icon="Paperclip" circle plain />
-                <ElButton :icon="Picture" circle plain />
-                <ElButton type="primary" @click="sendMessage" v-ripple>发送</ElButton>
-              </div>
-            </template>
-          </ElInput>
-          <div class="flex-cb mt-3">
-            <div class="flex-c">
-              <ArtSvgIcon icon="ri:image-line" class="mr-5 c-p text-g-600 text-lg" />
-              <ArtSvgIcon icon="ri:emotion-happy-line" class="mr-5 c-p text-g-600 text-lg" />
-            </div>
-            <ElButton type="primary" @click="sendMessage" v-ripple class="min-w-20">发送</ElButton>
-          </div>
+            @keydown.ctrl.enter="sendMessage"
+            @keydown.meta.enter="sendMessage"
+          />
+          <ElButton type="primary" :loading="isSending" @click="sendMessage" class="send-btn">
+            <ElIcon>
+              <Promotion />
+            </ElIcon>
+            发送
+          </ElButton>
+        </div>
+        <div class="input-footer">
+          <span>💡 AI 生成内容仅供参考，请谨慎判断</span>
         </div>
       </div>
     </div>
@@ -155,279 +132,95 @@
 </template>
 
 <script setup lang="ts">
-  import { Picture, Paperclip, ArrowDown } from '@element-plus/icons-vue'
-  import { mittBus } from '@/utils/sys'
-  import meAvatar from '@/assets/images/avatar/avatar5.webp'
-  import aiAvatar from '@/assets/images/avatar/avatar10.webp'
-  import avatar2 from '@/assets/images/avatar/avatar2.webp'
-  import avatar3 from '@/assets/images/avatar/avatar3.webp'
-  import avatar4 from '@/assets/images/avatar/avatar4.webp'
-  import avatar5 from '@/assets/images/avatar/avatar5.webp'
-  import avatar6 from '@/assets/images/avatar/avatar6.webp'
-  import avatar7 from '@/assets/images/avatar/avatar7.webp'
-  import avatar8 from '@/assets/images/avatar/avatar8.webp'
-  import avatar9 from '@/assets/images/avatar/avatar9.webp'
-  import avatar10 from '@/assets/images/avatar/avatar10.webp'
-  import { useAutoLayoutHeight } from '@/hooks/core/useLayoutHeight'
+  import { ChatDotRound, Delete, Promotion } from '@element-plus/icons-vue'
+  import { ElMessage } from 'element-plus'
+  import aiAvatar from '@/assets/images/avatar/Paimon.jpg'
+  import meAvatar from '@/assets/images/avatar/me.jpg'
 
   defineOptions({ name: 'TemplateChat' })
 
-  const { containerMinHeight } = useAutoLayoutHeight()
-
-  /**
-   * 联系人类型定义
-   */
-  interface Person {
-    id: number
+  // ==================== 类型定义 ====================
+  interface AIInfo {
     name: string
-    email: string
     avatar: string
-    online?: boolean
-    lastTime: string
-    unread?: number
+    description: string
+    isOnline: boolean
+    abilities: string[]
   }
 
-  const searchQuery = ref('')
-  const isDrawerVisible = ref(false)
-  const isOnline = ref(true)
-  const selectedPerson = ref<Person | null>(null)
+  interface ChatMessage {
+    id: number
+    sender: string
+    content: string
+    time: string
+    isMe: boolean
+    avatar: string
+    isThinking?: boolean
+  }
+
+  // ==================== 响应式数据 ====================
+  const aiInfo = ref<AIInfo>({
+    name: '派蒙',
+    avatar: aiAvatar,
+    description: '派蒙，最好的伙伴！',
+    isOnline: true,
+    abilities: ['问题解答', '数据分析', '文档处理', '创意写作']
+  })
+
+  const suggestions = ref<string[]>([
+    '介绍一下你自己和你的功能',
+    '如何使用这个系统进行文档管理？',
+    '帮我分析一下最近的数据趋势',
+    '今天系统有什么新功能上线吗？'
+  ])
+
+  const quickSuggestions = ref<string[]>([
+    '你好，请介绍一下你自己',
+    '如何使用这个系统？',
+    '帮我分析数据',
+    '有什么新功能？'
+  ])
+
+  const isSending = ref(false)
   const messageText = ref('')
-  const messageId = ref(10)
-  const userAvatar = ref(meAvatar)
+  const messageId = ref(100)
   const messageContainer = ref<HTMLElement | null>(null)
+  const messages = ref<ChatMessage[]>([])
 
+  // ==================== 工具函数 ====================
   /**
-   * 联系人列表数据
+   * 格式化时间
    */
-  const personList = ref<Person[]>([
-    {
-      id: 1,
-      name: '梅洛迪·梅西',
-      email: 'melody@altbox.com',
-      avatar: meAvatar,
-      online: true,
-      lastTime: '20小时前',
-      unread: 0
-    },
-    {
-      id: 2,
-      name: '马克·史密斯',
-      email: 'max@kt.com',
-      avatar: avatar2,
-      online: true,
-      lastTime: '2周前',
-      unread: 6
-    },
-    {
-      id: 3,
-      name: '肖恩·宾',
-      email: 'sean@dellito.com',
-      avatar: avatar3,
-      online: false,
-      lastTime: '5小时前',
-      unread: 5
-    },
-    {
-      id: 4,
-      name: '爱丽丝·约翰逊',
-      email: 'alice@domain.com',
-      avatar: avatar4,
-      online: true,
-      lastTime: '1小时前',
-      unread: 2
-    },
-    {
-      id: 5,
-      name: '鲍勃·布朗',
-      email: 'bob@domain.com',
-      avatar: avatar5,
-      online: false,
-      lastTime: '3天前',
-      unread: 1
-    },
-    {
-      id: 6,
-      name: '查理·戴维斯',
-      email: 'charlie@domain.com',
-      avatar: avatar6,
-      online: true,
-      lastTime: '10分钟前',
-      unread: 0
-    },
-    {
-      id: 7,
-      name: '戴安娜·普林斯',
-      email: 'diana@domain.com',
-      avatar: avatar7,
-      online: true,
-      lastTime: '15分钟前',
-      unread: 3
-    },
-    {
-      id: 8,
-      name: '伊桑·亨特',
-      email: 'ethan@domain.com',
-      avatar: avatar8,
-      online: true,
-      lastTime: '5分钟前',
-      unread: 0
-    },
-    {
-      id: 9,
-      name: '杰西卡·琼斯',
-      email: 'jessica@domain.com',
-      avatar: avatar9,
-      online: false,
-      lastTime: '1天前',
-      unread: 4
-    },
-    {
-      id: 10,
-      name: '彼得·帕克',
-      email: 'peter@domain.com',
-      avatar: avatar10,
-      online: true,
-      lastTime: '2小时前',
-      unread: 1
-    },
-    {
-      id: 11,
-      name: '克拉克·肯特',
-      email: 'clark@domain.com',
-      avatar: avatar3,
-      online: true,
-      lastTime: '30分钟前',
-      unread: 2
-    },
-    {
-      id: 12,
-      name: '布鲁斯·韦恩',
-      email: 'bruce@domain.com',
-      avatar: avatar5,
-      online: false,
-      lastTime: '3天前',
-      unread: 0
-    },
-    {
-      id: 13,
-      name: '韦德·威尔逊',
-      email: 'wade@domain.com',
-      avatar: avatar6,
-      online: true,
-      lastTime: '10分钟前',
-      unread: 5
-    }
-  ])
-
-  /**
-   * 选择联系人
-   * @param person 联系人对象
-   */
-  const selectPerson = (person: Person) => {
-    selectedPerson.value = person
+  const formatTime = (date: Date): string => {
+    const hours = date.getHours().toString().padStart(2, '0')
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    return `${hours}:${minutes}`
   }
 
   /**
-   * 消息列表数据
+   * 初始化消息列表
    */
-  const messages = ref([
+  const initializeMessages = (): ChatMessage[] => [
     {
       id: 1,
-      sender: 'Art Bot',
-      content: '你好！我是你的AI助手，有什么我可以帮你的吗？',
-      time: '10:00',
-      isMe: false,
-      avatar: aiAvatar
-    },
-    {
-      id: 2,
-      sender: 'Ricky',
-      content: '我想了解一下系统的使用方法。',
-      time: '10:01',
-      isMe: true,
-      avatar: meAvatar
-    },
-    {
-      id: 3,
-      sender: 'Art Bot',
-      content: '好的，我来为您介绍系统的主要功能。首先，您可以通过左侧菜单访问不同的功能模块...',
-      time: '10:02',
-      isMe: false,
-      avatar: aiAvatar
-    },
-    {
-      id: 4,
-      sender: 'Ricky',
-      content: '听起来很不错，能具体讲讲数据分析部分吗？',
-      time: '10:05',
-      isMe: true,
-      avatar: meAvatar
-    },
-    {
-      id: 5,
-      sender: 'Art Bot',
-      content: '当然可以。数据分析模块可以帮助您实时监控关键指标，并生成详细的报表...',
-      time: '10:06',
-      isMe: false,
-      avatar: aiAvatar
-    },
-    {
-      id: 6,
-      sender: 'Ricky',
-      content: '太好了，那我如何开始使用呢？',
-      time: '10:08',
-      isMe: true,
-      avatar: meAvatar
-    },
-    {
-      id: 7,
-      sender: 'Art Bot',
-      content: '您可以先创建一个项目，然后在项目中添加相关的数据源，系统会自动进行分析。',
-      time: '10:09',
-      isMe: false,
-      avatar: aiAvatar
-    },
-    {
-      id: 8,
-      sender: 'Ricky',
-      content: '明白了，谢谢你的帮助！',
-      time: '10:10',
-      isMe: true,
-      avatar: meAvatar
-    },
-    {
-      id: 9,
-      sender: 'Art Bot',
-      content: '不客气，有任何问题随时联系我。',
-      time: '10:11',
+      sender: aiInfo.value.name,
+      content: `你好！我是${aiInfo.value.name}，你的 AI 智能助手 🤖
+
+我可以帮你：
+✨ 解答各种问题
+📊 分析和处理数据
+💡 提供建议和方案
+📝 协助撰写文档
+
+有什么我可以帮你的吗？`,
+      time: formatTime(new Date()),
       isMe: false,
       avatar: aiAvatar
     }
-  ])
+  ]
 
   /**
-   * 发送消息
-   * 添加新消息到消息列表并滚动到底部
-   */
-  const sendMessage = () => {
-    const text = messageText.value.trim()
-    if (!text) return
-
-    messages.value.push({
-      id: messageId.value++,
-      sender: 'Ricky',
-      content: text,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isMe: true,
-      avatar: userAvatar.value
-    })
-
-    messageText.value = ''
-    scrollToBottom()
-  }
-
-  /**
-   * 滚动到消息列表底部
+   * 滚动到底部
    */
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -437,16 +230,499 @@
     }, 100)
   }
 
+  // ==================== AI API 调用 ====================
   /**
-   * 打开聊天窗口
+   * 模拟调用后端 AI API
    */
-  const openChat = () => {
-    isDrawerVisible.value = true
+  const callAIAPI = async (userMessage: string): Promise<string> => {
+    // 模拟网络延迟
+    await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 1500))
+
+    const lowerMessage = userMessage.toLowerCase()
+
+    // 关键词回复逻辑（后续替换为真实 API）
+    if (lowerMessage.includes('介绍')) {
+      return `我是${aiInfo.value.name}，一个基于先进人工智能技术的智能助手。
+
+🎯 我的核心能力：
+• 自然语言理解和生成
+• 多轮对话交互
+• 数据分析和洞察
+• 文档内容处理
+
+🚀 我能帮你做什么：
+• 回答各类知识性问题
+• 协助使用系统功能
+• 分析和总结数据
+• 提供建议和方案
+
+我支持中文和英文交流，会用清晰、有条理的方式回答问题。现在就开始我们的对话吧！😊`
+    } else if (lowerMessage.includes('使用') || lowerMessage.includes('帮助')) {
+      return `很高兴为您介绍系统的使用方法！
+
+📚 快速入门指南：
+
+1️⃣ 文档管理
+• 进入「文档上传」模块
+• 拖拽文件到上传区域
+• 系统自动解析和分类
+
+2️⃣ 数据分析
+• 选择需要分析的文档
+• 点击「智能提取」按钮
+• 查看结构化数据和报表
+
+3️⃣ 模板中心
+• 浏览预设模板库
+• 选择合适的模板
+• 一键应用到文档
+
+有任何不懂的地方随时问我！💪`
+    } else if (lowerMessage.includes('分析') || lowerMessage.includes('数据')) {
+      return `我可以帮您进行全方位的数据分析！
+
+📊 数据分析服务：
+
+**实时监控**
+• 追踪关键指标变化
+• 异常数据预警
+• 多维度数据对比
+
+**趋势预测**
+• 基于历史数据分析
+• 识别发展模式
+• 预测未来走向
+
+**智能报告**
+• 自动生成可视化报表
+• 关键发现总结
+• 可执行建议
+
+您想分析哪方面的数据呢？📈`
+    } else if (lowerMessage.includes('功能') || lowerMessage.includes('更新')) {
+      return `让我为您介绍系统的最新功能！
+
+🎉 近期上线功能：
+
+✨ AI 智能助手（就是我啦！）
+• 自然语言对话交互
+• 实时问题解答
+• 个性化建议服务
+
+🤖 智能文档解析
+• 自动识别文档结构
+• 提取关键信息
+• 支持多种格式
+
+📱 移动端优化
+• 响应式设计
+• 触控友好界面
+
+想要详细了解某个功能吗？随时问我！😄`
+    } else if (lowerMessage.includes('你好') || lowerMessage.includes('hi')) {
+      return `你好！很高兴见到你！👋
+
+我是${aiInfo.value.name}，你的 AI 智能助手。今天有什么我可以帮助你的吗？
+
+你可以问我：
+• 关于系统使用的问题
+• 数据分析相关的需求
+• 文档处理的疑问
+• 或者任何你想了解的内容
+
+期待与你交流！😊`
+    } else {
+      return `感谢你的提问！🤔
+
+这是一个很好的问题！作为 AI 助手，我会尽力为你提供准确、有用的信息。
+
+建议你：
+1. 可以先查看相关功能模块的说明
+2. 如果需要具体操作指导，我可以一步步教你
+3. 复杂问题可以联系技术支持团队
+
+我会一直在这里帮助你，还有其他问题吗？😊`
+    }
   }
 
-  onMounted(() => {
+  // ==================== 事件处理 ====================
+  /**
+   * 发送消息
+   */
+  const sendMessage = async () => {
+    const text = messageText.value.trim()
+    if (!text || isSending.value) return
+
+    // 添加用户消息
+    messages.value.push({
+      id: messageId.value++,
+      sender: '我',
+      content: text,
+      time: formatTime(new Date()),
+      isMe: true,
+      avatar: meAvatar
+    })
+
+    messageText.value = ''
     scrollToBottom()
-    mittBus.on('openChat', openChat)
-    selectedPerson.value = personList.value[0]
+
+    // 添加 AI 思考状态
+    messages.value.push({
+      id: messageId.value++,
+      sender: aiInfo.value.name,
+      content: '',
+      time: formatTime(new Date()),
+      isMe: false,
+      avatar: aiAvatar,
+      isThinking: true
+    })
+    scrollToBottom()
+
+    // 调用 AI API
+    isSending.value = true
+    try {
+      const response = await callAIAPI(text)
+      messages.value.pop()
+
+      messages.value.push({
+        id: messageId.value++,
+        sender: aiInfo.value.name,
+        content: response,
+        time: formatTime(new Date()),
+        isMe: false,
+        avatar: aiAvatar
+      })
+      scrollToBottom()
+    } catch (error) {
+      console.error('AI 响应失败:', error)
+      messages.value.pop()
+
+      messages.value.push({
+        id: messageId.value++,
+        sender: aiInfo.value.name,
+        content: '抱歉，我遇到了一些问题，暂时无法回答您的问题。请稍后再试。',
+        time: formatTime(new Date()),
+        isMe: false,
+        avatar: aiAvatar
+      })
+      scrollToBottom()
+      ElMessage.error('AI 响应失败，请稍后重试')
+    } finally {
+      isSending.value = false
+    }
+  }
+
+  /**
+   * 处理建议点击
+   */
+  const handleSuggestionClick = (suggestion: string) => {
+    messageText.value = suggestion
+    sendMessage()
+  }
+
+  /**
+   * 清空聊天记录
+   */
+  const clearChatHistory = () => {
+    messages.value = initializeMessages()
+    ElMessage.success('聊天记录已清空')
+    scrollToBottom()
+  }
+
+  // ==================== 生命周期 ====================
+  onMounted(() => {
+    messages.value = initializeMessages()
+    scrollToBottom()
   })
 </script>
+
+<style scoped lang="scss">
+  .chat-page {
+    display: flex;
+    height: calc(100vh - 120px);
+    margin: 0;
+    padding: 0;
+  }
+
+  .sidebar {
+    width: 320px;
+    background: #f5f7fa;
+    border-right: 1px solid #e4e7ed;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+
+    @media (max-width: 768px) {
+      display: none;
+    }
+  }
+
+  .ai-profile {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .avatar-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+
+  .online-dot {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #f56c6c;
+    border: 2px solid #fff;
+
+    &.online {
+      background: #67c23a;
+    }
+  }
+
+  .ai-name {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0;
+  }
+
+  .ai-desc {
+    font-size: 13px;
+    color: #909399;
+    margin-top: 8px;
+  }
+
+  .section {
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #606266;
+    margin-bottom: 12px;
+  }
+
+  .ability-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+  }
+
+  .suggestion-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px;
+    background: #fff;
+    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 13px;
+    color: #606266;
+
+    &:hover {
+      border-color: #409eff;
+      background: rgba(64, 158, 255, 0.05);
+    }
+
+    .icon {
+      color: #409eff;
+      margin-top: 1px;
+    }
+  }
+
+  .main-chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+  }
+
+  .chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #e4e7ed;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+  }
+
+  .header-status {
+    font-size: 12px;
+    color: #909399;
+    margin-top: 2px;
+  }
+
+  .message-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    background: #f5f7fa;
+  }
+
+  .message {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+
+    &.message-me {
+      flex-direction: row-reverse;
+
+      .message-body {
+        align-items: flex-end;
+      }
+
+      .message-bubble {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        border-radius: 12px 12px 0 12px;
+      }
+    }
+
+    &.message-ai {
+      .message-bubble {
+        background: #fff;
+        color: #333;
+        border-radius: 12px 12px 12px 0;
+        border: 1px solid #e4e7ed;
+      }
+    }
+  }
+
+  .message-body {
+    display: flex;
+    flex-direction: column;
+    max-width: 70%;
+  }
+
+  .message-sender {
+    font-size: 12px;
+    color: #606266;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .message-time {
+    font-size: 11px;
+    color: #909399;
+    margin-bottom: 6px;
+  }
+
+  .message-bubble {
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  .thinking-dots {
+    display: flex;
+    gap: 4px;
+
+    span {
+      width: 8px;
+      height: 8px;
+      background: #909399;
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+
+      &:nth-child(1) {
+        animation-delay: -0.32s;
+      }
+
+      &:nth-child(2) {
+        animation-delay: -0.16s;
+      }
+    }
+  }
+
+  @keyframes bounce {
+    0%,
+    80%,
+    100% {
+      transform: scale(0);
+    }
+    40% {
+      transform: scale(1);
+    }
+  }
+
+  .input-area {
+    padding: 20px 24px;
+    border-top: 1px solid #e4e7ed;
+    background: #fff;
+  }
+
+  .quick-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .quick-tag {
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:hover {
+      background: rgba(64, 158, 255, 0.1);
+    }
+  }
+
+  .input-wrapper {
+    display: flex;
+    gap: 12px;
+
+    :deep(.el-textarea) {
+      flex: 1;
+
+      .el-textarea__inner {
+        border-radius: 12px;
+        border: 2px solid #e4e7ed;
+        resize: none;
+
+        &:focus {
+          border-color: #409eff;
+          box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+        }
+      }
+    }
+
+    .send-btn {
+      min-width: 100px;
+      border-radius: 12px;
+    }
+  }
+
+  .input-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #909399;
+  }
+</style>
