@@ -340,5 +340,10 @@ declare namespace Api {
       uploaderId: number
       updateAt: string
     }
+    interface FolderCreateParams {
+      lib_id: number
+      name: string
+      parent_id: number
+    }
   }
 }
