@@ -29,7 +29,8 @@ export function extractTableSchema(id: number) {
  */
 export function extractTableData(id: number) {
   return request.post<Api.Table.TableInfo>({
-    url: `/api/table/extract/${id}`
+    url: `/api/table/extract/${id}`,
+    timeout: 300000
   })
 }
 
