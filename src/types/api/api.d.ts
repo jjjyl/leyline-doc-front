@@ -345,5 +345,11 @@ declare namespace Api {
       name: string
       parent_id: number
     }
+    // 在 Api.Folder 命名空间中添加
+    export interface FolderNode extends FolderInfo {
+      children?: (FolderNode | Doc.DocInfo)[]
+      isFolder: boolean // 用于区分文件夹和文件
+      originalType?: string // 保留原始类型
+    }
   }
 }

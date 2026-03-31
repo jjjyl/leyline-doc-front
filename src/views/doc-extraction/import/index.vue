@@ -19,6 +19,22 @@
             :value="lib.libId"
           />
         </el-select>
+        <div class="flex items-center gap-4 mb-4">
+          <!-- 现有文档库选择、新建文档库等按钮 -->
+          ...
+
+          <!-- 新增：选择上传目录 -->
+          <el-tree-select
+            v-model="selectedFolderId"
+            :data="folderTreeOptions"
+            :props="{ label: 'name', children: 'children', value: 'id' }"
+            placeholder="选择上传目录（默认根目录）"
+            clearable
+            filterable
+            style="width: 240px"
+            :disabled="uploadingActive"
+          />
+        </div>
 
         <!-- 编辑文档库按钮（移除权限限制） -->
         <el-button
@@ -49,6 +65,15 @@
           :disabled="uploadingActive"
         >
           新建文档库
+        </el-button>
+
+        <el-button
+          type="success"
+          plain
+          @click="showCreateFolderDialog = true"
+          :disabled="!selectedLibId || uploadingActive"
+        >
+          新建文件夹
         </el-button>
 
         <el-button
@@ -105,33 +130,47 @@
 
     <div class="mb-4">
       <h3 class="text-lg font-semibold mb-2">已导入文档</h3>
-      <el-table :data="documents" style="width: 100%">
+      <el-table
+        :data="treeData"
+        row-key="id"
+        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        v-loading="loading"
+        border
+      >
         <el-table-column prop="name" label="文件名" />
         <el-table-column prop="size" label="大小" />
-        <el-table-column prop="type" label="类型">
+        <el-table-column label="类型">
           <template #default="{ row }">
-            <span>{{ typeMap[row.type] || row.type }}</span>
+            <span>{{ row.isFolder ? '文件夹' : typeMap[row.type] || row.type || '文件' }}</span>
           </template>
         </el-table-column>
-
-        <el-table-column prop="status" label="状态">
+        <el-table-column label="状态">
           <template #default="{ row }">
             <el-tag :type="row.status === 'normal' ? 'success' : 'info'">
               {{ statusMap[row.status] || row.status }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="hasTable" label="是否已有表格">
+        <el-table-column label="是否已有表格">
           <template #default="{ row }">
-            {{ row.hasTable ? '是' : '否' }}
+            {{ row.isFolder ? '-' : row.hasTable ? '是' : '否' }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
-          <template #default="scope">
-            <el-button size="small" @click="previewDocument(scope.row)">预览</el-button>
-            <el-button size="small" type="danger" @click="deleteDocument(scope.row)"
-              >删除</el-button
+        <el-table-column label="操作" width="220">
+          <template #default="{ row }">
+            <el-button size="small" @click="previewDocument(row)" :disabled="row.isFolder">
+              预览
+            </el-button>
+            <el-button size="small" type="danger" @click="deleteItem(row)"> 删除 </el-button>
+            <el-button
+              v-if="!row.isFolder"
+              size="small"
+              type="primary"
+              plain
+              @click="moveItem(row)"
             >
+              移动
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -175,6 +214,30 @@
       </span>
     </template>
   </el-dialog>
+
+  <el-dialog v-model="showCreateFolderDialog" title="新建文件夹" width="30%">
+    <el-form :model="createFolderForm" :rules="createFolderRules">
+      <el-form-item label="文件夹名称" prop="name">
+        <el-input v-model="createFolderForm.name" placeholder="请输入文件夹名称" />
+      </el-form-item>
+      <el-form-item label="父文件夹">
+        <el-tree-select
+          v-model="createFolderForm.parentId"
+          :data="folderTreeOptions"
+          :props="{ label: 'name', children: 'children', value: 'id' }"
+          placeholder="请选择父文件夹（默认根目录）"
+          clearable
+          filterable
+        />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="showCreateFolderDialog = false">取消</el-button>
+      <el-button type="primary" @click="handleCreateFolder" :loading="creatingFolder"
+        >确定</el-button
+      >
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
@@ -183,6 +246,8 @@
   import { UploadFilled, Edit, Delete } from '@element-plus/icons-vue'
   import * as docLibApi from '@/api/doc-lib'
   import * as docApi from '@/api/doc'
+  // 需要引入 folder API
+  import * as folderApi from '@/api/folder'
   import axios from 'axios'
   import { useUserStore } from '@/store/modules/user'
 
@@ -202,6 +267,10 @@
   const selectedLibId = ref<number | null>(null)
   const parentId = ref<number>(0)
 
+  //文件夹相关
+  const selectedFolderId = ref<number | null>(0)
+
+
   // 上传相关
   const uploadRef = ref<any>(null)
   const fileList = ref<any[]>([])
@@ -210,6 +279,95 @@
   const currentUploadProgress = ref(0)
   const uploadedCount = ref(0)
   const totalUploadCount = ref(0)
+
+  // 新增响应式变量
+  const treeData = ref<any[]>([]) // 树形数据（用于表格展示）
+  const loading = ref(false) // 加载状态
+
+  //创建文件文件夹相关
+  const showCreateFolderDialog = ref(false)
+  const createFolderFormRef = ref()
+  const creatingFolder = ref(false)
+  const createFolderForm = ref({
+    name: '',
+    parentId: 0 // 0 表示根目录
+  })
+  const createFolderRules = {
+    name: [{ required: true, message: '请输入文件夹名称', trigger: 'blur' }]
+  }
+
+  // 构建树形结构的辅助函数
+  const buildTree = (folders: Api.Folder.FolderInfo[], docs: Api.Doc.DocInfo[]): any[] => {
+    // 先构建 map，以 id 为键
+    const folderMap = new Map<number, any>()
+    const result: any[] = []
+
+    // 初始化所有文件夹节点，并预留 children 数组
+    folders.forEach((folder) => {
+      const node = {
+        ...folder,
+        isFolder: true,
+        children: [] as any[],
+        // 表格需要的一些字段
+        type: 'dir',
+        status: 'normal',
+        hasTable: false
+      }
+      folderMap.set(folder.id, node)
+    })
+
+    // 将文档挂载到对应父文件夹下
+    docs.forEach((doc) => {
+      const parentId = doc.parentId
+      const docNode = {
+        ...doc,
+        isFolder: false
+        // 如果是文档，没有 children
+      }
+      if (parentId === 0) {
+        // 根目录下的文档
+        result.push(docNode)
+      } else {
+        const parentFolder = folderMap.get(parentId)
+        if (parentFolder) {
+          parentFolder.children.push(docNode)
+        } else {
+          // 父文件夹不存在（可能后端数据异常），暂时放到根目录
+          result.push(docNode)
+        }
+      }
+    })
+
+    // 将文件夹按父级关系组织
+    folders.forEach((folder) => {
+      const parentId = folder.parentId
+      if (parentId === 0) {
+        result.push(folderMap.get(folder.id))
+      } else {
+        const parentFolder = folderMap.get(parentId)
+        if (parentFolder) {
+          parentFolder.children.push(folderMap.get(folder.id))
+        } else {
+          // 父文件夹不存在，放到根目录
+          result.push(folderMap.get(folder.id))
+        }
+      }
+    })
+
+    // 清理空 children（避免显示展开图标）
+    const cleanEmptyChildren = (nodes: any[]) => {
+      nodes.forEach((node) => {
+        if (node.children && node.children.length === 0) {
+          delete node.children
+        } else if (node.children) {
+          cleanEmptyChildren(node.children)
+        }
+      })
+    }
+    cleanEmptyChildren(result)
+
+    return result
+  }
 
   // 定义映射函数
   const mapDocFromBackend = (backendDoc: any): Api.Doc.DocInfo => {
@@ -223,6 +381,17 @@
       type: backendDoc.type,
       uploaderId: backendDoc.uploader_id,
       hasTable: backendDoc.has_table
+    }
+  }
+  const mapFolderFromBackend = (backendFolder: any): Api.Folder.FolderInfo => {
+    return {
+      id: backendFolder.id,
+      libId: backendFolder.lib_id,
+      name: backendFolder.name,
+      parentId: backendFolder.parent_id,
+      uploaderId: backendFolder.uploader_id,
+      createdAt: backendFolder.created_at,
+      updateAt: backendFolder.updated_at
     }
   }
 
@@ -422,14 +591,14 @@
   }
 
   // 上传单个文件
-  const uploadSingleFile = (file: File, libId: number): Promise<void> => {
+  const uploadSingleFile = (file: File, libId: number, parentId: number): Promise<void> => {
     return new Promise(async (resolve, reject) => {
       try {
         const sessionParams: Api.Doc.CreateUploadSessionRequest = {
           file_name: file.name,
           file_size: file.size,
           lib_id: libId,
-          parent_id: parentId.value,
+          parent_id: parentId,
           type: file.type || 'file'
         }
 
@@ -468,7 +637,8 @@
       ElMessage.warning('请先添加要上传的文件')
       return
     }
-
+    // 获取上传目标父文件夹ID
+    const targetParentId = selectedFolderId.value ?? 0
     uploadingActive.value = true
     failedFiles.value = []
     uploadedCount.value = 0
@@ -482,7 +652,7 @@
       currentUploadProgress.value = 0
 
       try {
-        await uploadSingleFile(file, selectedLibId.value)
+        await uploadSingleFile(file, selectedLibId.value, targetParentId)
         uploadedCount.value++
         ElMessage.success(`文件 ${file.name} 上传成功`)
       } catch (err) {
@@ -525,40 +695,64 @@
     }
   }
 
-  // 删除文档
-  const deleteDocument = async (doc: any) => {
-    try {
-      await ElMessageBox.confirm(`确定要删除文档 "${doc.name}" 吗？此操作不可恢复。`, '确认删除', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      })
+  const deleteItem = async (item: any) => {
+    if (item.isFolder) {
+      // 删除文件夹
+      try {
+        await ElMessageBox.confirm(`确定删除文件夹“${item.name}”及其所有内容吗？`, '警告', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+        await folderApi.deleteFolder(item.id)
+        ElMessage.success('删除成功')
+        await loadDocuments()
+      } catch (error) {
+        if (error !== 'cancel') ElMessage.error('删除失败')
+      }
+    } else {
+      try {
+        await ElMessageBox.confirm(
+          `确定要删除文档 "${item.name}" 吗？此操作不可恢复。`,
+          '确认删除',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        )
 
-      await docApi.deleteDoc(doc.id)
-      ElMessage.success('删除成功')
-      await loadDocuments()
-    } catch (error) {
-      if (error !== 'cancel') {
-        ElMessage.error('删除失败')
+        await docApi.deleteDoc(item.id)
+        ElMessage.success('删除成功')
+        await loadDocuments()
+      } catch (error) {
+        if (error !== 'cancel') {
+          ElMessage.error('删除失败')
+        }
       }
     }
   }
 
   // 加载文档列表
   // 在loadDocuments中使用
+  // 修改 loadDocuments
   const loadDocuments = async () => {
     if (!selectedLibId.value) return
-    documents.value = []
+    loading.value = true
     try {
-      const response = await docApi.getDocList(parentId.value, selectedLibId.value)
-      // 假设response.docs是后端返回的数组
-      if (response.docs && Array.isArray(response.docs)) {
-        documents.value = response.docs.map(mapDocFromBackend)
-      } else {
-        documents.value = []
-      }
+      // 同时请求文档列表和文件夹列表
+      const docResponse = await docApi.getDocList(parentId.value, selectedLibId.value)
+
+      const foldersResponse = await folderApi.getFolderList(selectedLibId.value)
+
+      const docs = (docResponse.docs || []).map(mapDocFromBackend)
+      const folders = (foldersResponse.folders || []).map(mapFolderFromBackend)
+
+      treeData.value = buildTree(folders, docs)
     } catch (error) {
-      ElMessage.error('获取文档列表失败')
+      ElMessage.error('获取数据失败')
+    } finally {
+      loading.value = false
     }
   }
 
@@ -613,6 +807,47 @@
       ElMessage.error('创建文档库失败，请重试')
     } finally {
       creatingLib.value = false
+    }
+  }
+
+  const folderTreeOptions = computed(() => {
+    const extractFolders = (nodes: any[]): any[] => {
+      return nodes
+        .filter((node) => node.isFolder)
+        .map((node) => ({
+          id: node.id,
+          name: node.name,
+          children: node.children ? extractFolders(node.children) : []
+        }))
+    }
+    return extractFolders(treeData.value)
+  })
+
+  //提交创建文件夹表单
+  const handleCreateFolder = async () => {
+    if (!selectedLibId.value) return
+    console.log('创建文件夹参数:', {
+      lib_id: selectedLibId.value,
+      name: createFolderForm.value.name,
+      parent_id: createFolderForm.value.parentId
+    })
+    try {
+      //await createFolderFormRef.value.validate()
+      creatingFolder.value = true
+      await folderApi.folderCreate({
+        lib_id: selectedLibId.value,
+        name: createFolderForm.value.name,
+        parent_id: createFolderForm.value.parentId || 0
+      })
+
+      ElMessage.success('文件夹创建成功')
+      showCreateFolderDialog.value = false
+      createFolderForm.value = { name: '', parentId: 0 }
+      await loadDocuments() // 刷新树
+    } catch (error) {
+      ElMessage.error('创建失败')
+    } finally {
+      creatingFolder.value = false
     }
   }
 
