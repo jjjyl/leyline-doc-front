@@ -3,7 +3,7 @@ import request from '@/utils/http'
 /**
  * 获取文件夹详情
  */
-export function getFolder(id:number) {
+export function getFolder(id: number) {
   return request.get<Api.Folder.FolderInfo>({
     url: `/api/folder/${id}`
   })
@@ -13,7 +13,7 @@ export function getFolder(id:number) {
  * 创建文件夹
  */
 export function folderCreate(params: Api.Folder.FolderCreateParams) {
-  return request.post({ url: `/api/folder` }, params)
+  return request.post({ url: `/api/folder`, params })
 }
 
 /**
