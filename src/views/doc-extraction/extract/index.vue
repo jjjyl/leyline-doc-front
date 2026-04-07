@@ -50,6 +50,11 @@
         <el-table-column prop="type" label="类型" />
         <el-table-column prop="uploader_id" label="上传者ID" />
         <el-table-column prop="status" label="状态" />
+        <el-table-column label="已提取表格" width="220">
+          <template #default="{ row }">
+            <el-button size="small" @click="showTable(row.id)"> 查看 </el-button>
+          </template></el-table-column
+        >
       </el-table>
     </div>
 
@@ -61,8 +66,9 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, computed, onMounted } from 'vue'
-  import { ElMessage, ElMessageBox } from 'element-plus'
+  import { ref, reactive, onMounted } from 'vue'
+  import { ElMessage } from 'element-plus'
+  import { openTableEditDialog } from '@/components/TableEditDialog/useTableEditDialog'
   import * as docApi from '@/api/doc'
   import * as tableApi from '@/api/table'
   import * as docLibApi from '@/api/doc-lib'
@@ -96,10 +102,7 @@
       const res = await docLibApi.fetchDocLibs()
       libList.value = res || []
       if (libList.value.length > 0) {
-        if (
-          extractForm.libId &&
-          libList.value.some((lib) => lib.libId === extractForm.libId)
-        ) {
+        if (extractForm.libId && libList.value.some((lib) => lib.libId === extractForm.libId)) {
           // 保持当前选中
         } else {
           extractForm.libId = libList.value[0]?.libId || null
@@ -152,7 +155,7 @@
 
     extracting.value = true
     progress.value = 0
-    progressStatus.value = ''
+    progressStatus.value = undefined
 
     try {
       const res = await tableApi.extractTableData(extractForm.documentId)
@@ -215,6 +218,11 @@
     results.sentences = []
     results.custom = []
     ElMessage.success('结果已清空')
+  }
+
+  const showTable = async (docId: number) => {
+    const res = await tableApi.getTableData(docId)
+    openTableEditDialog(res)
   }
 </script>
 

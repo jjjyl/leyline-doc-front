@@ -297,6 +297,7 @@ declare namespace Api {
       col_count: number
       comment: string
       headers: string[]
+      id: string
       name: string
       row_count: number
       rows: TableRow[]
