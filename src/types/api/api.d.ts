@@ -525,4 +525,18 @@ declare namespace Api {
 
     interface PutFileResponse {}
   }
+
+  namespace AiChat {
+    /** 发送聊天消息的请求参数 */
+    interface SendMessageParams {
+      prompt: string
+      session_id?: string // 可选，用于多轮对话的会话标识
+    }
+
+    /** SSE 流式响应的事件数据 */
+    interface StreamEvent {
+      event: string // 事件类型，如 "data", "end", "error"
+      data: string // 消息内容块
+    }
+  }
 }

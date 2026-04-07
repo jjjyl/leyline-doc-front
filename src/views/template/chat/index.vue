@@ -136,6 +136,7 @@
   import { ElMessage } from 'element-plus'
   import aiAvatar from '@/assets/images/avatar/Paimon.jpg'
   import meAvatar from '@/assets/images/avatar/me.jpg'
+  import { sendStreamMessage } from '@/api/ai-chat'
 
   defineOptions({ name: 'TemplateChat' })
 
@@ -159,6 +160,10 @@
   }
 
   // ==================== 响应式数据 ====================
+
+  // 添加响应式变量：当前活动的 AbortController
+  const currentController = ref<AbortController | null>(null)
+
   const aiInfo = ref<AIInfo>({
     name: '派蒙',
     avatar: aiAvatar,
@@ -353,7 +358,13 @@
     const text = messageText.value.trim()
     if (!text || isSending.value) return
 
-    // 添加用户消息
+    // 取消之前的请求
+    if (currentController.value) {
+      currentController.value.abort()
+      currentController.value = null
+    }
+
+    // 添加用户消息...
     messages.value.push({
       id: messageId.value++,
       sender: '我',
@@ -362,13 +373,13 @@
       isMe: true,
       avatar: meAvatar
     })
-
     messageText.value = ''
     scrollToBottom()
 
-    // 添加 AI 思考状态
+    // 添加 AI 占位消息
+    const aiMessageId = messageId.value++
     messages.value.push({
-      id: messageId.value++,
+      id: aiMessageId,
       sender: aiInfo.value.name,
       content: '',
       time: formatTime(new Date()),
@@ -378,38 +389,42 @@
     })
     scrollToBottom()
 
-    // 调用 AI API
     isSending.value = true
-    try {
-      const response = await callAIAPI(text)
-      messages.value.pop()
+    let accumulatedContent = ''
+    const sessionId = localStorage.getItem('chat_session_id') || ''
 
-      messages.value.push({
-        id: messageId.value++,
-        sender: aiInfo.value.name,
-        content: response,
-        time: formatTime(new Date()),
-        isMe: false,
-        avatar: aiAvatar
-      })
-      scrollToBottom()
-    } catch (error) {
-      console.error('AI 响应失败:', error)
-      messages.value.pop()
-
-      messages.value.push({
-        id: messageId.value++,
-        sender: aiInfo.value.name,
-        content: '抱歉，我遇到了一些问题，暂时无法回答您的问题。请稍后再试。',
-        time: formatTime(new Date()),
-        isMe: false,
-        avatar: aiAvatar
-      })
-      scrollToBottom()
-      ElMessage.error('AI 响应失败，请稍后重试')
-    } finally {
-      isSending.value = false
-    }
+    // 调用底层通信函数，传入回调
+    currentController.value = sendStreamMessage(
+      { prompt: text, session_id: sessionId },
+      // onData: 接收每个数据块
+      (chunk) => {
+        accumulatedContent += chunk
+        const msg = messages.value.find((m) => m.id === aiMessageId)
+        if (msg) {
+          msg.isThinking = false
+          msg.content = accumulatedContent
+          scrollToBottom()
+        }
+      },
+      // onDone: 流结束
+      (usage) => {
+        isSending.value = false
+        currentController.value = null
+        if (usage) console.log('Token 使用情况:', usage)
+      },
+      // onError: 错误处理
+      (error) => {
+        console.error('AI 响应失败:', error)
+        const msg = messages.value.find((m) => m.id === aiMessageId)
+        if (msg) {
+          msg.isThinking = false
+          msg.content = '抱歉，我遇到了一些问题，暂时无法回答。请稍后再试。'
+        }
+        isSending.value = false
+        currentController.value = null
+        ElMessage.error('AI 响应失败，请重试')
+      }
+    )
   }
 
   /**
