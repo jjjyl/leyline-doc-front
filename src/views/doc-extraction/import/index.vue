@@ -20,9 +20,6 @@
           />
         </el-select>
         <div class="flex items-center gap-4 mb-4">
-          <!-- 现有文档库选择、新建文档库等按钮 -->
-          ...
-
           <!-- 新增：选择上传目录 -->
           <el-tree-select
             v-model="selectedFolderId"
@@ -31,6 +28,8 @@
             placeholder="选择上传目录（默认根目录）"
             clearable
             filterable
+            :expand-on-click-node="false"
+            @node-click="handleTreeNodeClick"
             style="width: 240px"
             :disabled="uploadingActive"
           />
@@ -228,6 +227,8 @@
           placeholder="请选择父文件夹（默认根目录）"
           clearable
           filterable
+          :expand-on-click-node="false"
+          @node-click="handleParentNodeClick"
         />
       </el-form-item>
     </el-form>
@@ -269,7 +270,6 @@
 
   //文件夹相关
   const selectedFolderId = ref<number | null>(0)
-
 
   // 上传相关
   const uploadRef = ref<any>(null)
@@ -741,7 +741,7 @@
     loading.value = true
     try {
       // 同时请求文档列表和文件夹列表
-      const docResponse = await docApi.getDocList(parentId.value, selectedLibId.value)
+      const docResponse = await docApi.getDocList(undefined, selectedLibId.value)
 
       const foldersResponse = await folderApi.getFolderList(selectedLibId.value)
 
@@ -820,7 +820,9 @@
           children: node.children ? extractFolders(node.children) : []
         }))
     }
-    return extractFolders(treeData.value)
+    const folders = extractFolders(treeData.value)
+    // 添加根目录选项（id=0）
+    return [{ id: 0, name: '根目录', children: folders }]
   })
 
   //提交创建文件夹表单
@@ -858,6 +860,20 @@
       fileList.value.splice(index, 1)
       ElMessage.info(`已移除文件: ${file.name}`)
     }
+  }
+
+  // 处理上传目录选择器的节点点击
+  const handleTreeNodeClick = (data: any, node: any, event: Event) => {
+    // 手动设置选中值
+    selectedFolderId.value = data.id
+    // 阻止事件冒泡，避免可能的冲突
+    event.stopPropagation()
+  }
+
+  // 处理新建文件夹对话框中父文件夹选择器的节点点击
+  const handleParentNodeClick = (data: any, node: any, event: Event) => {
+    createFolderForm.value.parentId = data.id
+    event.stopPropagation()
   }
 
   // 组件挂载时加载文档库和文档列表
