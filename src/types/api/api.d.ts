@@ -352,4 +352,176 @@ declare namespace Api {
       originalType?: string // 保留原始类型
     }
   }
+
+  /** 表格行操作类型 */
+  namespace TableRow {
+    /** 更新表格行请求 */
+    interface UpdateTableRowRequest {
+      cells: string[]
+      doc_id: number
+      row_id: string
+      table_id: string
+    }
+
+    /** 更新表格行响应 */
+    interface UpdateTableRowResponse {
+      doc_id: number
+      row: Table.TableRow
+      row_id: string
+      status: string
+      table_id: string
+    }
+
+    /** 删除表格行响应 */
+    interface DeleteTableRowResponse {
+      doc_id: number
+      row_id: string
+      status: string
+      table_id: string
+    }
+  }
+
+  /** Word编辑类型 */
+  namespace WordEdit {
+    /** 编辑文档请求 */
+    interface EditDocumentRequest {
+      doc_id: number
+      instruction: string
+      auto_approve?: boolean
+      preview_only?: boolean
+    }
+
+    /** 编辑文档响应 */
+    interface EditDocumentResponse {
+      doc_id: number
+      edit_id: string
+      preview?: Preview
+      risk_level: string
+      status: string
+      success: boolean
+      warnings: string[]
+    }
+
+    interface Preview {
+      operations: OperationPreview[]
+    }
+
+    interface OperationPreview {
+      description: string
+      operation: string
+      risk_level: string
+    }
+
+    /** 预览编辑请求 */
+    interface PreviewEditRequest {
+      doc_id: number
+      instruction: string
+    }
+
+    /** 预览编辑响应 */
+    interface PreviewEditResponse {
+      preview: string
+      risk_level: string
+      success: boolean
+      warnings: string[]
+    }
+
+    /** 确认执行请求 */
+    interface ApproveEditRequest {
+      edit_id: string
+    }
+
+    /** 确认执行响应 */
+    interface ApproveEditResponse {
+      doc_id: number
+      edit_id: string
+      new_version: number
+      operations_completed: number
+      success: boolean
+    }
+
+    /** 取消编辑请求 */
+    interface CancelEditRequest {
+      edit_id: string
+    }
+
+    /** 取消编辑响应 */
+    interface CancelEditResponse {
+      edit_id: string
+      success: boolean
+    }
+
+    /** 获取编辑状态响应 */
+    interface GetEditStatusResponse {
+      completed_ops: number
+      edit_id: string
+      error_message: string
+      progress: number
+      status: string
+      success: boolean
+      total_ops: number
+    }
+
+    /** 编辑历史项 */
+    interface EditHistoryItem {
+      created_at: string
+      edit_id: string
+      instruction: string
+      operations_count: number
+      status: string
+    }
+
+    /** 获取编辑历史响应 */
+    interface GetEditHistoryResponse {
+      history: EditHistoryItem[]
+      success: boolean
+    }
+
+    /** 回滚文档请求 */
+    interface RevertDocumentRequest {
+      doc_id: number
+      target_version: number
+    }
+
+    /** 回滚文档响应 */
+    interface RevertDocumentResponse {
+      doc_id: number
+      new_version: number
+      reverted_to: number
+      success: boolean
+    }
+  }
+
+  /** WOPI类型 */
+  namespace Wopi {
+    /** CheckFileInfo响应 */
+    interface CheckFileInfoResponse {
+      BaseFileName: string
+      BaseUrl?: string
+      FileExtension?: string
+      IsAnonymousUser: boolean
+      LastModifiedTime: string
+      LicenseCheckInfo?: LicenseCheckInfo
+      OwnerId?: string
+      PostMessageOrigin?: string
+      PostMessageOriginDomain?: string
+      ReadOnly: boolean
+      Size: number
+      SupportsLocks?: boolean
+      SupportsRename?: boolean
+      SupportsUpdate?: boolean
+      UserCanNotWriteRelative: boolean
+      UserCanRename: boolean
+      UserCanWrite?: boolean
+      UserFriendlyName: string
+      UserId: string
+      Version: string
+    }
+
+    interface LicenseCheckInfo {
+      IsLicensed: boolean
+    }
+
+    interface PutFileResponse {}
+  }
 }

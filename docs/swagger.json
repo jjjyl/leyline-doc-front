@@ -1,0 +1,3294 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/api/auth/login": {
+            "post": {
+                "description": "用户登录获取 token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户登录",
+                "parameters": [
+                    {
+                        "description": "登录请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "登录成功",
+                        "schema": {
+                            "$ref": "#/definitions/user.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "用户名或密码错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/logout": {
+            "post": {
+                "description": "用户登出，将 token 加入黑名单",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户登出",
+                "responses": {
+                    "200": {
+                        "description": "登出成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/refresh": {
+            "post": {
+                "description": "使用 refresh_token 获取新的 access_token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "刷新 Token",
+                "parameters": [
+                    {
+                        "description": "刷新 Token 请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.RefreshTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "刷新成功",
+                        "schema": {
+                            "$ref": "#/definitions/user.RefreshTokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "无效的 refresh_token",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/register": {
+            "post": {
+                "description": "注册新用户",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "用户注册",
+                "parameters": [
+                    {
+                        "description": "注册请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "注册成功",
+                        "schema": {
+                            "$ref": "#/definitions/user.RegisterResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "用户已存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/doc": {
+            "get": {
+                "description": "获取文档列表，可根据 parent_id 和 lib_id 过滤",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "doc"
+                ],
+                "summary": "列出文档列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "父文档 ID",
+                        "name": "parent_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "文档库 ID",
+                        "name": "lib_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功响应",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/doc.ListDocsResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "列出文档失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "更新指定文档的信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "doc"
+                ],
+                "summary": "更新文档",
+                "parameters": [
+                    {
+                        "description": "更新文档请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/doc.UpdateDocRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/doc.UpdateDocResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "更新文档失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "创建新的文档记录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "doc"
+                ],
+                "summary": "创建文档",
+                "parameters": [
+                    {
+                        "description": "创建文档请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/doc.CreateDocRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/doc.CreateDocResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "创建文档失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/doc-lib": {
+            "get": {
+                "description": "获取所有文档库的列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "doc-lib"
+                ],
+                "summary": "列出文档库列表",
+                "responses": {
+                    "200": {
+                        "description": "获取成功响应",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/doc.ListDocLibsResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "列出文档库失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "更新指定文档库的信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "doc-lib"
+                ],
+                "summary": "更新文档库",
+                "parameters": [
+                    {
+                        "description": "更新文档库请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/doc.UpdateDocLibRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功响应",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "更新文档库失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "创建新的文档库",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "doc-lib"
+                ],
+                "summary": "创建文档库",
+                "parameters": [
+                    {
+                        "description": "创建文档库请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/doc.CreateDocLibRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/doc.CreateDocLibResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "创建文档库失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/doc-lib/{id}": {
+            "get": {
+                "description": "获取指定文档库的详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "doc-lib"
+                ],
+                "summary": "获取文档库详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文档库 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/doc.GetDocLibResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "文档库 ID 格式错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "获取文档库失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "删除指定的文档库",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "doc-lib"
+                ],
+                "summary": "删除文档库",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文档库 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功响应",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "文档库 ID 格式错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "删除文档库失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/doc/upload": {
+            "post": {
+                "description": "上传文档文件到服务器",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "doc"
+                ],
+                "summary": "上传文档",
+                "deprecated": true,
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "要上传的文件",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "上传成功响应",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "获取上传文件失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "上传文件失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/doc/upload-session": {
+            "post": {
+                "description": "创建分片上传会话，获取上传 URL 和上传 ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "doc"
+                ],
+                "summary": "创建上传会话",
+                "parameters": [
+                    {
+                        "description": "创建上传会话请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/doc.CreateUploadSessionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/doc.CreateUploadSessionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "创建上传会话失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/doc/upload/finish": {
+            "post": {
+                "description": "完成分片上传，合并所有分片",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "doc"
+                ],
+                "summary": "完成上传",
+                "parameters": [
+                    {
+                        "description": "完成上传请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/doc.FinishUploadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "完成成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/doc.FinishUploadResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "完成上传失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/doc/{id}": {
+            "get": {
+                "description": "获取指定文档的详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "doc"
+                ],
+                "summary": "获取文档详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文档 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/doc.GetDocResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "文档 ID 格式错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "获取文档失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "删除指定的文档",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "doc"
+                ],
+                "summary": "删除文档",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文档 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/doc.DeleteDocResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "文档 ID 格式错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "删除文档失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/folder": {
+            "get": {
+                "description": "获取文件夹列表，可根据 parent_id 和 lib_id 过滤",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "folder"
+                ],
+                "summary": "列出文件夹列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "父文件夹 ID",
+                        "name": "parent_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "文档库 ID",
+                        "name": "lib_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功响应",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/doc.ListFoldersResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "列出文件夹失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "更新指定文件夹的信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "folder"
+                ],
+                "summary": "更新文件夹",
+                "parameters": [
+                    {
+                        "description": "更新文件夹请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/doc.UpdateFolderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/doc.UpdateFolderResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "更新文件夹失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "创建新的文件夹",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "folder"
+                ],
+                "summary": "创建文件夹",
+                "parameters": [
+                    {
+                        "description": "创建文件夹请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/doc.CreateFolderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/doc.CreateFolderResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "创建文件夹失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/folder/{id}": {
+            "get": {
+                "description": "获取指定文件夹的详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "folder"
+                ],
+                "summary": "获取文件夹详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文件夹 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/doc.GetFolderResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "文件夹 ID 格式错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "获取文件夹失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "删除指定的文件夹（必须为空）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "folder"
+                ],
+                "summary": "删除文件夹",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文件夹 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/doc.DeleteFolderResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "文件夹 ID 格式错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "删除文件夹失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/table/extract-schema/{id}": {
+            "post": {
+                "description": "从指定文档中提取表格 Schema 定义，返回表格的字段结构信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "table"
+                ],
+                "summary": "提取文档表格 Schema",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文档 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "提取成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/table.ExtractTableSchemaResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "文档 ID 格式错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "提取表格 Schema 失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/table/extract/{id}": {
+            "post": {
+                "description": "从指定文档中提取表格数据，返回包含表头和数据行的完整表格",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "table"
+                ],
+                "summary": "提取文档表格数据",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文档 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "提取成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/table.ExtractTableDataResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "文档 ID 格式错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "提取表格失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/table/generate/{id}": {
+            "post": {
+                "description": "从指定文档中生成结构化的表格数据，包含 Schema 提取和数据提取两个阶段",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "table"
+                ],
+                "summary": "生成文档表格",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文档 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "生成成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/table.GenerateTableResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "文档 ID 格式错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "生成表格失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/table/row/{doc_id}/{table_id}/{row_id}": {
+            "put": {
+                "description": "根据文档ID、表格ID和行ID修改表格中的指定行数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "table"
+                ],
+                "summary": "修改表格行数据",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文档 ID",
+                        "name": "doc_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "表格 ID",
+                        "name": "table_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "行 ID",
+                        "name": "row_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "修改请求，包含新的单元格数据",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/table.UpdateTableRowRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "修改成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/table.UpdateTableRowResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数格式错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "修改表格行失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "根据文档ID、表格ID和行ID删除表格中的指定行",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "table"
+                ],
+                "summary": "删除表格行",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文档 ID",
+                        "name": "doc_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "表格 ID",
+                        "name": "table_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "行 ID",
+                        "name": "row_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "删除成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/table.DeleteTableRowResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数格式错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "删除表格行失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/table/{id}": {
+            "get": {
+                "description": "从 MongoDB 中获取指定文档已提取的表格数据，如果文档尚未提取表格则返回空列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "table"
+                ],
+                "summary": "获取文档表格数据",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文档 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/table.GetTablesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "文档 ID 格式错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "获取表格失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/me": {
+            "get": {
+                "description": "获取当前登录用户的详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "获取当前用户信息",
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/user.UserInfoResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "更新当前登录用户的信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "更新用户信息",
+                "parameters": [
+                    {
+                        "description": "更新用户信息请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "$ref": "#/definitions/user.UserInfoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "用户名或邮箱已存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "删除当前登录的用户",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "删除用户",
+                "responses": {
+                    "200": {
+                        "description": "删除成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "未授权",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/password": {
+            "put": {
+                "description": "更新当前登录用户的密码",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "更新密码",
+                "parameters": [
+                    {
+                        "description": "更新密码请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.UpdatePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "原密码错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/{id}": {
+            "get": {
+                "description": "根据用户 ID 获取用户详细信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "根据 ID 获取用户信息",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功",
+                        "schema": {
+                            "$ref": "#/definitions/user.UserInfoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "用户 ID 格式错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/word-edit/approve": {
+            "post": {
+                "description": "确认执行之前预览过的编辑操作",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "word-edit"
+                ],
+                "summary": "确认执行编辑",
+                "parameters": [
+                    {
+                        "description": "确认执行请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/wordedit.ApproveEditRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "确认成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/wordedit.ApproveEditResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "确认执行编辑失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/word-edit/cancel": {
+            "post": {
+                "description": "取消待确认的编辑任务",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "word-edit"
+                ],
+                "summary": "取消编辑",
+                "parameters": [
+                    {
+                        "description": "取消编辑请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/wordedit.CancelEditRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "取消成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/wordedit.CancelEditResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "取消编辑失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/word-edit/edit": {
+            "post": {
+                "description": "使用自然语言指令编辑 Word 文档，支持预览和自动确认",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "word-edit"
+                ],
+                "summary": "编辑文档",
+                "parameters": [
+                    {
+                        "description": "编辑文档请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/wordedit.EditDocumentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "编辑成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/wordedit.EditDocumentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "编辑文档失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/word-edit/history/{id}": {
+            "get": {
+                "description": "获取指定文档的编辑历史记录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "word-edit"
+                ],
+                "summary": "获取编辑历史",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文档 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/wordedit.GetEditHistoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "文档 ID 格式错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "获取编辑历史失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/word-edit/preview": {
+            "post": {
+                "description": "预览文档编辑效果，不实际执行修改",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "word-edit"
+                ],
+                "summary": "预览编辑",
+                "parameters": [
+                    {
+                        "description": "预览编辑请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/wordedit.PreviewEditRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "预览成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/wordedit.PreviewEditResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "预览编辑失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/word-edit/revert": {
+            "post": {
+                "description": "回滚文档到指定版本",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "word-edit"
+                ],
+                "summary": "回滚文档",
+                "parameters": [
+                    {
+                        "description": "回滚文档请求",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/wordedit.RevertDocumentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "回滚成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/wordedit.RevertDocumentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "回滚文档失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/word-edit/status/{edit_id}": {
+            "get": {
+                "description": "获取指定编辑任务的状态",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "word-edit"
+                ],
+                "summary": "获取编辑状态",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "编辑任务 ID",
+                        "name": "edit_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功响应",
+                        "schema": {
+                            "$ref": "#/definitions/wordedit.GetEditStatusResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "编辑 ID 格式错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "获取编辑状态失败",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/wopi/files/{file_id}": {
+            "get": {
+                "description": "获取文件信息供 Office Online 使用",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wopi"
+                ],
+                "summary": "WOPI CheckFileInfo",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "文件 ID",
+                        "name": "file_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/wopi.CheckFileInfoResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "文件不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/wopi/files/{file_id}/contents": {
+            "get": {
+                "description": "获取文件内容供 Office Online 使用",
+                "tags": [
+                    "wopi"
+                ],
+                "summary": "WOPI GetFile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "文件 ID",
+                        "name": "file_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "文件内容",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "404": {
+                        "description": "文件不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "上传文件内容供 Office Online 使用",
+                "tags": [
+                    "wopi"
+                ],
+                "summary": "WOPI PutFile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "文件 ID",
+                        "name": "file_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/wopi.PutFileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "锁冲突",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/wopi/files/{file_id}/lock": {
+            "get": {
+                "description": "获取文件的当前锁信息",
+                "tags": [
+                    "wopi"
+                ],
+                "summary": "WOPI GetLock",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "文件 ID",
+                        "name": "file_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取成功"
+                    },
+                    "404": {
+                        "description": "文件不存在",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "刷新锁",
+                "tags": [
+                    "wopi"
+                ],
+                "summary": "WOPI RefreshLock",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "文件 ID",
+                        "name": "file_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "锁标识",
+                        "name": "X-WOPI-Lock",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "刷新成功"
+                    },
+                    "409": {
+                        "description": "锁不匹配",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "锁定文件",
+                "tags": [
+                    "wopi"
+                ],
+                "summary": "WOPI Lock",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "文件 ID",
+                        "name": "file_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "锁标识",
+                        "name": "X-WOPI-Lock",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "锁定成功"
+                    },
+                    "409": {
+                        "description": "锁冲突",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "解锁文件",
+                "tags": [
+                    "wopi"
+                ],
+                "summary": "WOPI Unlock",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "文件 ID",
+                        "name": "file_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "锁标识",
+                        "name": "X-WOPI-Lock",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "解锁成功"
+                    },
+                    "409": {
+                        "description": "锁不匹配",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "doc.CreateDocLibRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "doc.CreateDocLibResponse": {
+            "type": "object",
+            "properties": {
+                "lib_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "doc.CreateDocRequest": {
+            "type": "object",
+            "properties": {
+                "lib_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "doc.CreateDocResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "doc.CreateFolderRequest": {
+            "type": "object",
+            "properties": {
+                "lib_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "doc.CreateFolderResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "lib_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "doc.CreateUploadSessionRequest": {
+            "type": "object",
+            "properties": {
+                "file_name": {
+                    "type": "string"
+                },
+                "file_size": {
+                    "type": "integer"
+                },
+                "lib_id": {
+                    "type": "integer"
+                },
+                "parent_id": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "doc.CreateUploadSessionResponse": {
+            "type": "object",
+            "properties": {
+                "doc_id": {
+                    "type": "integer"
+                },
+                "upload_id": {
+                    "type": "string"
+                },
+                "upload_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "doc.DeleteDocResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "doc.DeleteFolderResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "doc.FinishUploadRequest": {
+            "type": "object",
+            "properties": {
+                "doc_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "doc.FinishUploadResponse": {
+            "type": "object",
+            "properties": {
+                "doc_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "doc.GetDocLibResponse": {
+            "type": "object",
+            "properties": {
+                "belongs_user_id": {
+                    "type": "integer"
+                },
+                "lib_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "doc.GetDocResponse": {
+            "type": "object",
+            "properties": {
+                "has_table": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lib_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "integer"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "uploader_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "doc.GetFolderResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lib_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "uploader_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "doc.ListDocLibsResponse": {
+            "type": "object",
+            "properties": {
+                "belongs_user": {
+                    "type": "string"
+                },
+                "belongs_user_id": {
+                    "type": "integer"
+                },
+                "lib_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "doc.ListDocsResponse": {
+            "type": "object",
+            "properties": {
+                "has_table": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lib_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "integer"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "uploader_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "doc.ListFoldersResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lib_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "uploader_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "doc.UpdateDocLibRequest": {
+            "type": "object",
+            "properties": {
+                "lib_id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "doc.UpdateDocRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "doc.UpdateDocResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "doc.UpdateFolderRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "doc.UpdateFolderResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "table.DeleteTableRowResponse": {
+            "type": "object",
+            "properties": {
+                "doc_id": {
+                    "type": "integer"
+                },
+                "row_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "table_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "table.ExtractTableDataResponse": {
+            "type": "object",
+            "properties": {
+                "doc_id": {
+                    "type": "integer"
+                },
+                "tables": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/table.TableFormat"
+                    }
+                }
+            }
+        },
+        "table.ExtractTableSchemaResponse": {
+            "type": "object",
+            "properties": {
+                "doc_id": {
+                    "type": "integer"
+                },
+                "schemas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/table.TableSchema"
+                    }
+                }
+            }
+        },
+        "table.FiledType": {
+            "type": "string",
+            "enum": [
+                "string",
+                "int64",
+                "float64",
+                "bool"
+            ],
+            "x-enum-varnames": [
+                "TypeString",
+                "TypeInt64",
+                "TypeFloat64",
+                "TypeBool"
+            ]
+        },
+        "table.GenerateTableResponse": {
+            "type": "object",
+            "properties": {
+                "doc_id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "table.GetTablesResponse": {
+            "type": "object",
+            "properties": {
+                "doc_id": {
+                    "type": "integer"
+                },
+                "tables": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/table.TableFormat"
+                    }
+                }
+            }
+        },
+        "table.TableField": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "$ref": "#/definitions/table.FiledType"
+                }
+            }
+        },
+        "table.TableFormat": {
+            "type": "object",
+            "properties": {
+                "col_count": {
+                    "description": "列数",
+                    "type": "integer"
+                },
+                "comment": {
+                    "description": "表格备注",
+                    "type": "string"
+                },
+                "headers": {
+                    "description": "表头（列名）",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "description": "表格唯一标识，用于前端定位修改",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "表格名称",
+                    "type": "string"
+                },
+                "row_count": {
+                    "description": "行数（不包含表头）",
+                    "type": "integer"
+                },
+                "rows": {
+                    "description": "数据行数组",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/table.TableRow"
+                    }
+                }
+            }
+        },
+        "table.TableRow": {
+            "type": "object",
+            "properties": {
+                "cells": {
+                    "description": "单元格内容数组，每个元素代表一列的值",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "description": "行唯一标识，用于前端定位修改",
+                    "type": "string"
+                }
+            }
+        },
+        "table.TableSchema": {
+            "type": "object",
+            "properties": {
+                "comment": {
+                    "type": "string"
+                },
+                "fields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/table.TableField"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "primary_key": {
+                    "type": "string"
+                }
+            }
+        },
+        "table.UpdateTableRowRequest": {
+            "type": "object",
+            "required": [
+                "cells"
+            ],
+            "properties": {
+                "cells": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "doc_id": {
+                    "type": "integer"
+                },
+                "row_id": {
+                    "type": "string"
+                },
+                "table_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "table.UpdateTableRowResponse": {
+            "type": "object",
+            "properties": {
+                "doc_id": {
+                    "type": "integer"
+                },
+                "row": {
+                    "$ref": "#/definitions/table.TableRow"
+                },
+                "row_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "table_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.LoginRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "password"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "user_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.RefreshTokenRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.RefreshTokenResponse": {
+            "type": "object",
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 3
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 6
+                }
+            }
+        },
+        "user.RegisterResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "user_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.UpdatePasswordRequest": {
+            "type": "object",
+            "required": [
+                "new_password",
+                "old_password"
+            ],
+            "properties": {
+                "new_password": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 6
+                },
+                "old_password": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.UpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 3
+                }
+            }
+        },
+        "user.UserInfoResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "wopi.CheckFileInfoResponse": {
+            "type": "object",
+            "properties": {
+                "BaseFileName": {
+                    "description": "必需字段",
+                    "type": "string"
+                },
+                "BaseUrl": {
+                    "description": "可选字段 - 文件 URL",
+                    "type": "string"
+                },
+                "FileExtension": {
+                    "description": "可选字段 - 其他",
+                    "type": "string"
+                },
+                "IsAnonymousUser": {
+                    "type": "boolean"
+                },
+                "LastModifiedTime": {
+                    "type": "string"
+                },
+                "LicenseCheckInfo": {
+                    "$ref": "#/definitions/wopi.LicenseCheckInfo"
+                },
+                "OwnerId": {
+                    "description": "可选字段 - 用户信息",
+                    "type": "string"
+                },
+                "PostMessageOrigin": {
+                    "description": "可选字段 - PostMessage",
+                    "type": "string"
+                },
+                "PostMessageOriginDomain": {
+                    "type": "string"
+                },
+                "ReadOnly": {
+                    "type": "boolean"
+                },
+                "Size": {
+                    "type": "integer"
+                },
+                "SupportsLocks": {
+                    "description": "可选字段 - 主机功能",
+                    "type": "boolean"
+                },
+                "SupportsRename": {
+                    "type": "boolean"
+                },
+                "SupportsUpdate": {
+                    "type": "boolean"
+                },
+                "UserCanNotWriteRelative": {
+                    "type": "boolean"
+                },
+                "UserCanRename": {
+                    "type": "boolean"
+                },
+                "UserCanWrite": {
+                    "description": "可选字段 - 用户权限",
+                    "type": "boolean"
+                },
+                "UserFriendlyName": {
+                    "type": "string"
+                },
+                "UserId": {
+                    "type": "string"
+                },
+                "Version": {
+                    "type": "string"
+                }
+            }
+        },
+        "wopi.LicenseCheckInfo": {
+            "type": "object",
+            "properties": {
+                "IsLicensed": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "wopi.PutFileResponse": {
+            "type": "object"
+        },
+        "wordedit.ApproveEditRequest": {
+            "type": "object",
+            "required": [
+                "edit_id"
+            ],
+            "properties": {
+                "edit_id": {
+                    "description": "编辑任务ID",
+                    "type": "string"
+                }
+            }
+        },
+        "wordedit.ApproveEditResponse": {
+            "type": "object",
+            "properties": {
+                "doc_id": {
+                    "description": "文档ID",
+                    "type": "integer"
+                },
+                "edit_id": {
+                    "description": "编辑任务ID",
+                    "type": "string"
+                },
+                "new_version": {
+                    "description": "新版本号",
+                    "type": "integer"
+                },
+                "operations_completed": {
+                    "description": "已完成的操作数",
+                    "type": "integer"
+                },
+                "success": {
+                    "description": "是否成功",
+                    "type": "boolean"
+                }
+            }
+        },
+        "wordedit.CancelEditRequest": {
+            "type": "object",
+            "required": [
+                "edit_id"
+            ],
+            "properties": {
+                "edit_id": {
+                    "description": "编辑任务ID",
+                    "type": "string"
+                }
+            }
+        },
+        "wordedit.CancelEditResponse": {
+            "type": "object",
+            "properties": {
+                "edit_id": {
+                    "description": "编辑任务ID",
+                    "type": "string"
+                },
+                "success": {
+                    "description": "是否成功",
+                    "type": "boolean"
+                }
+            }
+        },
+        "wordedit.EditDocumentRequest": {
+            "type": "object",
+            "required": [
+                "doc_id",
+                "instruction"
+            ],
+            "properties": {
+                "auto_approve": {
+                    "description": "是否自动确认执行",
+                    "type": "boolean"
+                },
+                "doc_id": {
+                    "description": "文档ID",
+                    "type": "integer"
+                },
+                "instruction": {
+                    "description": "自然语言编辑指令",
+                    "type": "string"
+                },
+                "preview_only": {
+                    "description": "是否仅预览（不实际执行）",
+                    "type": "boolean"
+                }
+            }
+        },
+        "wordedit.EditDocumentResponse": {
+            "type": "object",
+            "properties": {
+                "doc_id": {
+                    "description": "文档ID",
+                    "type": "integer"
+                },
+                "edit_id": {
+                    "description": "编辑任务ID",
+                    "type": "string"
+                },
+                "preview": {
+                    "description": "预览信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/wordedit.Preview"
+                        }
+                    ]
+                },
+                "risk_level": {
+                    "description": "风险等级",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "状态",
+                    "type": "string"
+                },
+                "success": {
+                    "description": "是否成功",
+                    "type": "boolean"
+                },
+                "warnings": {
+                    "description": "警告信息",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "wordedit.EditHistoryItem": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "edit_id": {
+                    "description": "编辑ID",
+                    "type": "string"
+                },
+                "instruction": {
+                    "description": "原始指令",
+                    "type": "string"
+                },
+                "operations_count": {
+                    "description": "操作数量",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "状态",
+                    "type": "string"
+                }
+            }
+        },
+        "wordedit.GetEditHistoryResponse": {
+            "type": "object",
+            "properties": {
+                "history": {
+                    "description": "编辑历史列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/wordedit.EditHistoryItem"
+                    }
+                },
+                "success": {
+                    "description": "是否成功",
+                    "type": "boolean"
+                }
+            }
+        },
+        "wordedit.GetEditStatusResponse": {
+            "type": "object",
+            "properties": {
+                "completed_ops": {
+                    "description": "已完成操作数",
+                    "type": "integer"
+                },
+                "edit_id": {
+                    "description": "编辑任务ID",
+                    "type": "string"
+                },
+                "error_message": {
+                    "description": "错误信息",
+                    "type": "string"
+                },
+                "progress": {
+                    "description": "进度（百分比）",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "状态",
+                    "type": "string"
+                },
+                "success": {
+                    "description": "是否成功",
+                    "type": "boolean"
+                },
+                "total_ops": {
+                    "description": "总操作数",
+                    "type": "integer"
+                }
+            }
+        },
+        "wordedit.OperationPreview": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "description": "操作描述",
+                    "type": "string"
+                },
+                "operation": {
+                    "description": "操作类型",
+                    "type": "string"
+                },
+                "risk_level": {
+                    "description": "风险等级",
+                    "type": "string"
+                }
+            }
+        },
+        "wordedit.Preview": {
+            "type": "object",
+            "properties": {
+                "operations": {
+                    "description": "操作预览列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/wordedit.OperationPreview"
+                    }
+                }
+            }
+        },
+        "wordedit.PreviewEditRequest": {
+            "type": "object",
+            "required": [
+                "doc_id",
+                "instruction"
+            ],
+            "properties": {
+                "doc_id": {
+                    "description": "文档ID",
+                    "type": "integer"
+                },
+                "instruction": {
+                    "description": "自然语言编辑指令",
+                    "type": "string"
+                }
+            }
+        },
+        "wordedit.PreviewEditResponse": {
+            "type": "object",
+            "properties": {
+                "preview": {
+                    "description": "预览描述",
+                    "type": "string"
+                },
+                "risk_level": {
+                    "description": "风险等级",
+                    "type": "string"
+                },
+                "success": {
+                    "description": "是否成功",
+                    "type": "boolean"
+                },
+                "warnings": {
+                    "description": "警告信息",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "wordedit.RevertDocumentRequest": {
+            "type": "object",
+            "required": [
+                "doc_id",
+                "target_version"
+            ],
+            "properties": {
+                "doc_id": {
+                    "description": "文档ID",
+                    "type": "integer"
+                },
+                "target_version": {
+                    "description": "目标版本号",
+                    "type": "integer"
+                }
+            }
+        },
+        "wordedit.RevertDocumentResponse": {
+            "type": "object",
+            "properties": {
+                "doc_id": {
+                    "description": "文档ID",
+                    "type": "integer"
+                },
+                "new_version": {
+                    "description": "新版本号",
+                    "type": "integer"
+                },
+                "reverted_to": {
+                    "description": "回滚到的版本",
+                    "type": "integer"
+                },
+                "success": {
+                    "description": "是否成功",
+                    "type": "boolean"
+                }
+            }
+        }
+    }
+}

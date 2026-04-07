@@ -49,115 +49,117 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { ElMessage } from 'element-plus'
-import { executeOperation } from '@/api/operation' // 导入真实的API接口
+  import { ref, reactive } from 'vue'
+  import { ElMessage } from 'element-plus'
+  import { executeOperation } from '@/api/operation' // 导入真实的API接口
 
-const form = reactive({
-  instruction: ''
-})
-
-const commonCommands = [
-  '提取这份合同中的甲方名称和合同金额',
-  '将文档字体调整为宋体，小四号',
-  '删除文档中所有空白行',
-  '将文档所有段落设置为两端对齐',
-  '提取文档中的所有日期信息',
-  '将表格数据转换为JSON格式'
-]
-
-const result = ref('')
-const history = ref<Array<{
-  instruction: string,
-  result: string,
-  time: string
-}>>([])
-
-// 执行指令
-const executeInstruction = async () => {
-  if (!form.instruction.trim()) {
-    ElMessage.warning('请输入指令')
-    return
-  }
-
-  try {
-    ElMessage.info('正在处理指令...')
-
-    // 调用真实的智能操作API
-    const response = await executeOperation({
-      instruction: form.instruction
-    })
-
-    result.value = response.data.result || '指令执行完成'
-
-    // 添加到历史记录
-    addToHistory(form.instruction, result.value)
-
-    ElMessage.success('指令执行完成')
-  } catch (error) {
-    ElMessage.error('指令执行失败: ' + (error.message || '未知错误'))
-    result.value = '执行失败：' + (error.message || '未知错误')
-  }
-}
-
-// 清空指令
-const clearInstruction = () => {
-  form.instruction = ''
-  result.value = ''
-}
-
-// 选择常用指令
-const selectCommand = (command: string) => {
-  form.instruction = command
-}
-
-// 添加到历史记录
-const addToHistory = (instruction: string, resultText: string) => {
-  history.value.unshift({
-    instruction: instruction.length > 50 ? instruction.substring(0, 50) + '...' : instruction,
-    result: resultText.length > 100 ? resultText.substring(0, 100) + '...' : resultText,
-    time: new Date().toLocaleString()
+  const form = reactive({
+    instruction: ''
   })
 
-  // 只保留最近10条记录
-  if (history.value.length > 10) {
-    history.value = history.value.slice(0, 10)
+  const commonCommands = [
+    '提取这份合同中的甲方名称和合同金额',
+    '将文档字体调整为宋体，小四号',
+    '删除文档中所有空白行',
+    '将文档所有段落设置为两端对齐',
+    '提取文档中的所有日期信息',
+    '将表格数据转换为JSON格式'
+  ]
+
+  const result = ref('')
+  const history = ref<
+    Array<{
+      instruction: string
+      result: string
+      time: string
+    }>
+  >([])
+
+  // 执行指令
+  const executeInstruction = async () => {
+    if (!form.instruction.trim()) {
+      ElMessage.warning('请输入指令')
+      return
+    }
+
+    try {
+      ElMessage.info('正在处理指令...')
+
+      // 调用真实的智能操作API
+      const response = await executeOperation({
+        instruction: form.instruction
+      })
+
+      result.value = response.data.result || '指令执行完成'
+
+      // 添加到历史记录
+      addToHistory(form.instruction, result.value)
+
+      ElMessage.success('指令执行完成')
+    } catch (error) {
+      ElMessage.error('指令执行失败: ' + (error.message || '未知错误'))
+      result.value = '执行失败：' + (error.message || '未知错误')
+    }
   }
-}
 
-// 查看历史详情
-const viewHistoryDetail = (item: any) => {
-  ElMessage.info('历史详情功能开发中')
-}
+  // 清空指令
+  const clearInstruction = () => {
+    form.instruction = ''
+    result.value = ''
+  }
 
-// 删除历史记录
-const deleteHistory = async (index: number) => {
-  history.value.splice(index, 1)
-  ElMessage.success('历史记录已删除')
-}
+  // 选择常用指令
+  const selectCommand = (command: string) => {
+    form.instruction = command
+  }
 
-// 导出历史记录
-const exportHistory = () => {
-  const data = history.value.map(item => ({
-    指令: item.instruction,
-    结果: item.result,
-    时间: item.time
-  }))
+  // 添加到历史记录
+  const addToHistory = (instruction: string, resultText: string) => {
+    history.value.unshift({
+      instruction: instruction.length > 50 ? instruction.substring(0, 50) + '...' : instruction,
+      result: resultText.length > 100 ? resultText.substring(0, 100) + '...' : resultText,
+      time: new Date().toLocaleString()
+    })
 
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'operation_history.json'
-  a.click()
-  URL.revokeObjectURL(url)
+    // 只保留最近10条记录
+    if (history.value.length > 10) {
+      history.value = history.value.slice(0, 10)
+    }
+  }
 
-  ElMessage.success('历史记录已导出')
-}
+  // 查看历史详情
+  const viewHistoryDetail = (item: any) => {
+    ElMessage.info('历史详情功能开发中')
+  }
+
+  // 删除历史记录
+  const deleteHistory = async (index: number) => {
+    history.value.splice(index, 1)
+    ElMessage.success('历史记录已删除')
+  }
+
+  // 导出历史记录
+  const exportHistory = () => {
+    const data = history.value.map((item) => ({
+      指令: item.instruction,
+      结果: item.result,
+      时间: item.time
+    }))
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'operation_history.json'
+    a.click()
+    URL.revokeObjectURL(url)
+
+    ElMessage.success('历史记录已导出')
+  }
 </script>
 
 <style scoped>
-.doc-operation {
-  padding: 20px;
-}
+  .doc-operation {
+    padding: 20px;
+  }
 </style>

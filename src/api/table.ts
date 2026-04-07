@@ -6,7 +6,7 @@ import request from '@/utils/http'
  * @returns 文档表格数据，包含文档ID和表格列表
  */
 export function getTableData(docId: number) {
-  return request.get<Api.Table.TableInfo>({
+  return request.get<Api.Table.GetTablesResponse>({
     url: `/api/table/${docId}`
   })
 }
@@ -17,7 +17,7 @@ export function getTableData(docId: number) {
  * @returns 提取结果
  */
 export function extractTableSchema(id: number) {
-  return request.post<Api.Table.schema>({
+  return request.post<Api.Table.ExtractTableSchemaResponse>({
     url: `/api/table/extract-schema/${id}`
   })
 }
@@ -28,7 +28,7 @@ export function extractTableSchema(id: number) {
  * @returns 提取结果
  */
 export function extractTableData(id: number) {
-  return request.post<Api.Table.TableInfo>({
+  return request.post<Api.Table.ExtractTableDataResponse>({
     url: `/api/table/extract/${id}`,
     timeout: 300000
   })
@@ -40,7 +40,40 @@ export function extractTableData(id: number) {
  * @returns 生成结果
  */
 export function generateTable(id: number) {
-  return request.post<Api.Table.generateTableResponse>({
+  return request.post<Api.Table.GenerateTableResponse>({
     url: `/api/table/generate/${id}`
+  })
+}
+
+/**
+ * 根据文档ID、表格ID和行ID修改表格中的指定行数据
+ * @param docId 文档ID
+ * @param tableId 表格ID
+ * @param rowId 行ID
+ * @param cells 新的单元格数据
+ * @returns 修改结果
+ */
+export function updateTableRow(docId: number, tableId: string, rowId: string, cells: string[]) {
+  return request.put<Api.TableRow.UpdateTableRowResponse>({
+    url: `/api/table/row/${docId}/${tableId}/${rowId}`,
+    data: {
+      doc_id: docId,
+      table_id: tableId,
+      row_id: rowId,
+      cells
+    }
+  })
+}
+
+/**
+ * 根据文档ID、表格ID和行ID删除表格中的指定行
+ * @param docId 文档ID
+ * @param tableId 表格ID
+ * @param rowId 行ID
+ * @returns 删除结果
+ */
+export function deleteTableRow(docId: number, tableId: string, rowId: string) {
+  return request.del<Api.TableRow.DeleteTableRowResponse>({
+    url: `/api/table/row/${docId}/${tableId}/${rowId}`
   })
 }
