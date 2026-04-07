@@ -91,7 +91,7 @@
       const data = res.docs
       documents.value = data || []
       ElMessage.success(`获取到${documents.value.length}条文档`)
-      console.log(documents.value.docs)
+      console.log(documents.value)
     } catch (error) {
       ElMessage.error('获取文档列表失败')
     }
