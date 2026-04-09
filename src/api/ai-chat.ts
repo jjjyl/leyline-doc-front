@@ -5,11 +5,11 @@ import { useUserStore } from '@/store/modules/user'
 const axiosInstance = request as any
 const baseURL = axiosInstance.defaults?.baseURL || ''
 const commonHeaders = axiosInstance.defaults?.headers?.common || {}
-
 /**
  * 流式聊天消息（SSE）
  * @param params - 请求参数
  * @param onData - 每次收到数据块的回调（接收纯文本内容）
+ * @param onMeta - 数据元回调
  * @param onDone - 流结束时的回调（可选，接收 usage 信息）
  * @param onError - 错误回调
  * @returns 用于取消请求的 AbortController
@@ -17,26 +17,20 @@ const commonHeaders = axiosInstance.defaults?.headers?.common || {}
 export function sendStreamMessage(
   params: Api.AiChat.SendMessageParams,
   onData: (chunk: string) => void,
+  onMeta?: (meta: { session_id?: string; user_id?: number }) => void,
   onDone?: (usage?: any) => void,
   onError?: (error: Error) => void
 ): AbortController {
   const controller = new AbortController()
-
   const userStore = useUserStore()
-
-  // 根据实际 store 中的字段名调整，常见的有 accessToken、token
   const token = userStore.accessToken
-  // 拼接完整 URL（如果 baseURL 以 / 结尾，注意处理）
+
+  // 请根据实际后端地址修改（截图示例为 /api/llm/chat/stream）
   const fullURL = 'http://poyuan.kmdns.net:36879/api/llm/chat/stream'
 
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json'
-  }
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
-  }
+  const headers: HeadersInit = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
 
-  console.log('🔍 实际请求 URL:', fullURL)
   fetch(fullURL, {
     method: 'post',
     headers,
@@ -63,31 +57,50 @@ export function sendStreamMessage(
         buffer = lines.pop() || ''
 
         for (const line of lines) {
+          // 标准 SSE 格式：以 "data:" 开头
           if (!line.startsWith('data:')) continue
           const jsonStr = line.slice(5).trim()
           if (!jsonStr) continue
 
           try {
-            const { event, data } = JSON.parse(jsonStr)
-            if (event === 'data' && typeof data === 'string') {
-              onData(data)
+            const parsed = JSON.parse(jsonStr)
+            const { event, data } = parsed
+
+            if (event === 'meta') {
+              // data 可能是 JSON 字符串，需要二次解析
+              let sessionId: string | undefined
+              if (typeof data === 'string') {
+                try {
+                  const metaData = JSON.parse(data)
+                  sessionId = metaData.session_id
+                } catch (e) {
+                  console.warn('解析 meta data 失败:', data)
+                }
+              } else if (data && typeof data === 'object') {
+                sessionId = data.session_id
+              }
+              onMeta?.({ session_id: sessionId, user_id: parsed.user_id })
+            } else if (event === 'data') {
+              onData(typeof data === 'string' ? data : String(data))
             } else if (event === 'done') {
               let usage = null
-              if (data && typeof data === 'string') {
+              if (typeof data === 'string') {
                 try {
                   usage = JSON.parse(data)
-                } catch (e) {}
+                } catch {
+                  usage = data
+                }
+              } else {
+                usage = data
               }
               onDone?.(usage)
-              return // 收到 done 事件后直接结束
+              return
             }
           } catch (e) {
-            // 兼容非 JSON 格式，直接当作文本处理
-            onData(jsonStr)
+            console.warn('解析 SSE 数据失败:', jsonStr, e)
           }
         }
       }
-      // 流自然结束（未收到 done 事件）
       onDone?.()
     })
     .catch((error) => {
