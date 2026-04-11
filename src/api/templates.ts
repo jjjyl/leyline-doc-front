@@ -1,96 +1,79 @@
+// templates.ts
 import request from '@/utils/http'
 
 /**
- * 上传表格模板
- * @param file 模板文件
- * @param name 模板名称
- * @param description 描述
- * @returns 上传结果
+ * 获取模板列表
+ * @returns 模板列表
  */
-export function uploadTemplate(file: File, name: string, description?: string) {
-  const formData = new FormData()
-  formData.append('file', file)
-  formData.append('name', name)
-  if (description) {
-    formData.append('description', description)
-  }
+export function getTemplateList() {
+  return request.get<Api.Template.ListResponse>({
+    url: '/api/templ/list'
+  })
+}
 
-  return request.post<Api.Template.UploadResponse>({
-    url: '/api/templates/upload',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
+/**
+ * 创建上传会话（获取上传URL）
+ * @param file 文件对象
+ */
+export function createUploadSession(file: File) {
+  return request.post<Api.Template.CreateUploadSessionResponse>({
+    url: '/api/templ/upload/create',
+    data: {
+      file_name: file.name,
+      file_size: file.size
     }
   })
 }
 
 /**
- * 获取模板列表
- * @param params 查询参数
- * @returns 模板列表
+ * 完成上传（通知后端上传完成）
+ * @param templId 模板ID
  */
-export function getTemplateList(params?: Api.Template.ListParams) {
-  return request.get<Api.Template.ListResponse>({
-    url: '/api/templates',
-    params
+export async function finishUpload(templId: number) {
+  return request.post<Api.Template.FinishUploadResponse>({
+    url: '/api/templ/upload/finish',
+    data: { templ_id: templId }
   })
 }
 
 /**
  * 删除模板
  * @param id 模板ID
- * @returns 删除结果
  */
 export function deleteTemplate(id: number) {
-  return request.delete<Api.BaseResponse>({
-    url: `/api/templates/${id}`
+  return request.del<Api.BaseResponse>({
+    url: `/api/templ/${id}`
   })
 }
 
 /**
- * 开始数据填写
- * @param params 填写参数
- * @returns 填写任务信息
+ * 提取表格数据（获取已提取的表格）
+ * @param templId 模板ID
  */
-export function startDataFilling(params: Api.Filling.StartParams) {
-  return request.post<Api.Filling.StartResponse>({
-    url: '/api/filling/start',
+export async function extractTableData(templId: number) {
+  // 假设后端提供了获取表格数据的接口
+  return request.get<Api.Template.GetTablesResponse>({
+    url: `/api/templ/schema/${templId}` // 注意：此接口可能返回的是schema，如果需要数据则需另外接口
+  })
+}
+
+/**
+ * 获取模板的表格结构（Schema）
+ * @param templId 模板ID
+ */
+export async function getTemplate(templId: number) {
+  return request.get<Api.Template.TableSchema>({
+    url: `/api/templ/schema/${templId}`
+  })
+}
+
+/**
+ * 更新模板表格结构
+ * @param params 更新参数
+ */
+export async function updateTemplate(params: Api.Template.UpdateSchemaRequest) {
+  return request.put<Api.BaseResponse>({
+    url: '/api/templ/schema',
     data: params
-  })
-}
-
-/**
- * 获取填写结果
- * @param taskId 任务ID
- * @returns 填写结果
- */
-export function getFillingResult(taskId: string) {
-  return request.get<Api.Filling.ResultResponse>({
-    url: `/api/filling/${taskId}/result`
-  })
-}
-
-/**
- * 导出表格
- * @param taskId 任务ID
- * @param format 导出格式
- * @returns 文件下载
- */
-export function exportTable(taskId: string, format: 'word' | 'excel') {
-  return request.post<Blob>({
-    url: `/api/filling/${taskId}/export`,
-    data: { format },
-    responseType: 'blob'
-  })
-}
-
-/**
- * 生成分享链接
- * @param taskId 任务ID
- * @returns 分享链接信息
- */
-export function generateShareLink(taskId: string) {
-  return request.post<Api.Filling.ShareResponse>({
-    url: `/api/filling/${taskId}/share`
   })
 }

@@ -39,6 +39,7 @@ declare namespace Api {
     msg?: string
     data?: any
   }
+
   /** 通用类型 */
   namespace Common {
     /** 分页参数 */
@@ -104,6 +105,7 @@ declare namespace Api {
       userName?: string
       avatar?: string
     }
+
     /** 修改密码 */
     interface UpdatePasswordParams {
       newPassword: string
@@ -327,6 +329,25 @@ declare namespace Api {
       float64 = 'float64',
       bool = 'bool'
     }
+
+    /** 提取指定文档和模板的表格请求参数 */
+    interface ExtractSpecifiedRequest {
+      doc_ids: number[] // 数据源文档ID列表
+      template_ids: number[] // 模板文档ID列表
+      user_prompt: string // 用户自然语言指令
+    }
+
+    interface ExtractSpecifiedResponse {
+      tables: ExtractedTableItem[]
+    }
+
+    interface ExtractedTableItem {
+      table: TableFormat // 表格数据，复用之前的 TableFormat
+      table_id: string
+      template_id: number
+      use_template: boolean
+      user_prompt: string
+    }
   }
   /**
    * 文件夹详情
@@ -341,11 +362,13 @@ declare namespace Api {
       uploaderId: number
       updateAt: string
     }
+
     interface FolderCreateParams {
       lib_id: number
       name: string
       parent_id: number
     }
+
     // 在 Api.Folder 命名空间中添加
     export interface FolderNode extends FolderInfo {
       children?: (FolderNode | Doc.DocInfo)[]
@@ -537,6 +560,106 @@ declare namespace Api {
     interface StreamEvent {
       event: string // 事件类型，如 "data", "end", "error"
       data: string // 消息内容块
+    }
+  }
+
+  namespace Template {
+    /** 模板文档信息 */
+    /** 模板文档信息（适配后端字段） */
+    interface TemplateInfo {
+      id: number
+      name: string
+      created_at?: string // 后端返回的创建时间
+      updated_at?: string
+      url?: string
+      user_id?: number
+      table_schema_id?: string
+      status?: string
+      // 前端扩展字段
+      type?: string
+      createTime?: string
+      tableCount?: number
+      tables?: TableData[]
+    }
+
+    /** 表格数据结构（前端展示用） */
+    interface TableData {
+      name?: string
+      headers: string[]
+      rows: TableRow[]
+    }
+
+    interface TableRow {
+      id?: string | number
+      cells: any[]
+    }
+
+    /** 获取模板列表响应 */
+    interface ListResponse {
+      templates: TemplateInfo[] // 改为 templates
+    }
+
+    /** 创建上传会话请求 */
+    interface CreateUploadSessionRequest {
+      file_name: string
+      file_size: number
+    }
+
+    /** 创建上传会话响应 */
+    interface CreateUploadSessionResponse {
+      upload_url: string
+      upload_id: string
+      templ_id: number
+    }
+
+    /** 完成上传响应 */
+    interface FinishUploadResponse {
+      templ_id: number
+      status?: string
+    }
+
+    /** 完成上传响应 */
+    interface FinishUploadResponse {
+      templ_id: number
+      status: string
+    }
+
+    /** 提取表格数据响应（获取已提取的表格） */
+    interface GetTablesResponse {
+      doc_id: number
+      tables: TableFormat[]
+    }
+
+    /** 后端表格格式 */
+    interface TableFormat {
+      col_count: number
+      comment: string
+      headers: string[]
+      id: string
+      name: string
+      row_count: number
+      rows: { cells: string[] }[]
+    }
+
+    /** 表格Schema（结构定义） */
+    interface TableSchema {
+      comment: string
+      fields: TableField[]
+      name: string
+      primary_key: string
+    }
+
+    interface TableField {
+      description: string
+      name: string
+      required: boolean
+      type: string
+    }
+
+    /** 更新表格Schema请求 */
+    interface UpdateSchemaRequest {
+      templ_id: number
+      table_schema: TableSchema
     }
   }
 }

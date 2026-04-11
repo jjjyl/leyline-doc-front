@@ -77,3 +77,15 @@ export function deleteTableRow(docId: number, tableId: string, rowId: string) {
     url: `/api/table/row/${docId}/${tableId}/${rowId}`
   })
 }
+
+/**
+ * 根据指定的数据源文档和模板文档，使用 AI 提取表格数据
+ * @param params 请求参数
+ * @returns 提取的表格数据
+ */
+export function extractSpecifiedTables(params: Api.Table.ExtractSpecifiedRequest) {
+  return request.post<Api.Table.ExtractSpecifiedResponse>({
+    url: '/api/table/extract-specified',
+    data: params
+  })
+}
