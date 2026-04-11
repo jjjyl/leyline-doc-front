@@ -1,244 +1,483 @@
 <template>
-  <div class="doc-import">
-    <div class="mb-4">
-      <h2 class="text-xl font-bold mb-4">文档导入与识别</h2>
+  <div class="doc-import-container">
+    <div class="import-workspace">
+      <!-- 顶部：文档库管理区 -->
+      <div class="library-panel glass-effect">
+        <div class="panel-header">
+          <div class="header-content">
+            <div class="header-icon">📚</div>
+            <div>
+              <h2 class="panel-title">文档导入与识别</h2>
+              <p class="panel-subtitle">管理文档库，批量上传和识别文档</p>
+            </div>
+          </div>
+        </div>
 
-      <!-- 文档库选择区域 -->
-      <div class="flex items-center gap-4 mb-4">
-        <el-select
-          v-model="selectedLibId"
-          placeholder="请选择文档库"
-          :disabled="uploadingActive"
-          style="width: 240px"
-          @change="onLibChange"
-        >
-          <el-option
-            v-for="lib in libOptions"
-            :key="lib.libId"
-            :label="lib.name"
-            :value="lib.libId"
-          />
-        </el-select>
-        <div class="flex items-center gap-4 mb-4">
-          <!-- 新增：选择上传目录 -->
+        <div class="library-controls">
+          <div class="control-group">
+            <div class="select-wrapper">
+              <label class="select-label">
+                <ArtSvgIcon icon="ri:folder-3-line" class="label-icon" />
+                文档库
+              </label>
+              <el-select
+                v-model="selectedLibId"
+                placeholder="请选择文档库"
+                :disabled="uploadingActive"
+                class="modern-select lib-select"
+                @change="onLibChange"
+              >
+                <el-option
+                  v-for="lib in libOptions"
+                  :key="lib.libId"
+                  :label="lib.name"
+                  :value="lib.libId"
+                >
+                  <div class="option-lib">
+                    <ArtSvgIcon icon="ri:database-2-line" class="lib-icon" />
+                    <span>{{ lib.name }}</span>
+                  </div>
+                </el-option>
+              </el-select>
+            </div>
+
+            <div class="select-wrapper">
+              <label class="select-label">
+                <ArtSvgIcon icon="ri:folder-shared-line" class="label-icon" />
+                上传目录
+              </label>
+              <el-tree-select
+                v-model="selectedFolderId"
+                :data="folderTreeOptions"
+                :props="{ label: 'name', children: 'children', value: 'id' }"
+                placeholder="选择上传目录（默认根目录）"
+                clearable
+                filterable
+                :expand-on-click-node="false"
+                @node-click="handleTreeNodeClick"
+                class="modern-select folder-select"
+                :disabled="uploadingActive"
+              >
+                <template #default="{ data }">
+                  <div class="tree-option">
+                    <ArtSvgIcon
+                      :icon="data.id === 0 ? 'ri:home-line' : 'ri:folder-line'"
+                      class="folder-icon"
+                    />
+                    <span>{{ data.name }}</span>
+                  </div>
+                </template>
+              </el-tree-select>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <el-button
+              type="primary"
+              plain
+              :icon="Edit"
+              :disabled="!selectedLibId || uploadingActive"
+              @click="openEditLibDialog"
+              class="action-btn"
+            >
+              编辑
+            </el-button>
+
+            <el-button
+              type="danger"
+              plain
+              :icon="Delete"
+              :disabled="!selectedLibId || uploadingActive"
+              @click="handleDeleteLib"
+              class="action-btn"
+            >
+              删除
+            </el-button>
+
+            <el-button
+              type="success"
+              plain
+              @click="showCreateLibDialog = true"
+              :disabled="uploadingActive"
+              class="action-btn create-lib-btn"
+            >
+              <ArtSvgIcon icon="ri:add-circle-line" class="mr-1" />
+              新建文档库
+            </el-button>
+
+            <el-button
+              type="warning"
+              plain
+              @click="showCreateFolderDialog = true"
+              :disabled="!selectedLibId || uploadingActive"
+              class="action-btn"
+            >
+              <ArtSvgIcon icon="ri:folder-add-line" class="mr-1" />
+              新建文件夹
+            </el-button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 中部：上传区域 -->
+      <div class="upload-section">
+        <div class="upload-card glass-effect">
+          <div class="upload-header">
+            <h3 class="upload-title">
+              <ArtSvgIcon icon="ri:upload-cloud-2-line" class="title-icon" />
+              文件上传
+            </h3>
+            <div class="upload-stats" v-if="fileList.length > 0">
+              <el-tag type="primary" effect="dark">
+                <ArtSvgIcon icon="ri:file-line" class="mr-1" />
+                已缓存 {{ fileList.length }} 个文件
+              </el-tag>
+            </div>
+          </div>
+
+          <el-upload
+            ref="uploadRef"
+            class="modern-upload"
+            drag
+            :auto-upload="false"
+            v-model:file-list="fileList"
+            multiple
+            :limit="10"
+            :accept="'.docx,.md,.xlsx,.txt'"
+            :before-upload="beforeUpload"
+            :disabled="uploadingActive"
+          >
+            <div v-if="!uploadingActive" class="upload-dragger">
+              <div class="upload-icon-wrapper">
+                <div class="icon-ring"></div>
+                <ArtSvgIcon icon="ri:upload-cloud-2-line" class="upload-main-icon" />
+              </div>
+              <div class="upload-text-content">
+                <p class="upload-main-text">
+                  将文件拖到此处，或 <em class="highlight-text">点击上传</em>
+                </p>
+                <p class="upload-hint">支持 docx、md、xlsx、txt 格式，单个文件最大 100MB</p>
+              </div>
+              <div class="supported-formats">
+                <span class="format-badge docx">
+                  <ArtSvgIcon icon="ri:file-word-2-line" />
+                  Word
+                </span>
+                <span class="format-badge xlsx">
+                  <ArtSvgIcon icon="ri:file-excel-2-line" />
+                  Excel
+                </span>
+                <span class="format-badge md">
+                  <ArtSvgIcon icon="ri:markdown-line" />
+                  Markdown
+                </span>
+                <span class="format-badge txt">
+                  <ArtSvgIcon icon="ri:file-text-line" />
+                  Text
+                </span>
+              </div>
+            </div>
+
+            <div v-else class="upload-progress">
+              <div class="progress-animation">
+                <div class="loading-spinner"></div>
+              </div>
+              <div class="progress-info">
+                <p class="current-file">
+                  <ArtSvgIcon icon="ri:file-upload-line" class="file-icon" />
+                  正在上传: {{ currentUploadFileName }}
+                </p>
+                <div class="progress-bar-wrapper">
+                  <el-progress
+                    :percentage="currentUploadProgress"
+                    :stroke-width="12"
+                    class="upload-progress-bar"
+                  />
+                </div>
+                <p class="progress-detail">
+                  进度: {{ uploadedCount }} / {{ totalUploadCount }}
+                </p>
+              </div>
+            </div>
+
+            <template #tip>
+              <div class="upload-tip">
+                <ArtSvgIcon icon="ri:information-line" class="tip-icon" />
+                <span>请先选择文档库，再添加文件，最后点击【确认上传】</span>
+              </div>
+            </template>
+          </el-upload>
+
+          <div class="upload-actions" v-if="fileList.length > 0">
+            <el-button
+              type="primary"
+              @click="confirmUpload"
+              :loading="uploadingActive"
+              :disabled="!selectedLibId || fileList.length === 0"
+              class="confirm-upload-btn"
+              size="large"
+            >
+              <ArtSvgIcon icon="ri:check-double-line" class="mr-1" />
+              {{ uploadingActive ? '上传中...' : '确认上传' }}
+            </el-button>
+
+            <el-button
+              @click="clearFileList"
+              :disabled="uploadingActive || fileList.length === 0"
+              class="clear-btn"
+            >
+              <ArtSvgIcon icon="ri:delete-bin-line" class="mr-1" />
+              清空缓存
+            </el-button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部：文档列表 -->
+      <div class="documents-section">
+        <div class="section-header">
+          <h3 class="section-title">
+            <ArtSvgIcon icon="ri:file-list-3-line" class="title-icon" />
+            已导入文档
+          </h3>
+          <el-button
+            text
+            @click="loadDocuments"
+            :loading="loading"
+            class="refresh-btn"
+          >
+            <ArtSvgIcon icon="ri:refresh-line" :class="{ rotating: loading }" class="mr-1" />
+            刷新
+          </el-button>
+        </div>
+
+        <div class="table-wrapper glass-effect">
+          <el-table
+            :data="treeData"
+            row-key="id"
+            :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+            v-loading="loading"
+            border
+            class="modern-table"
+            :header-cell-style="{
+              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+              color: '#333',
+              fontWeight: '600',
+              fontSize: '14px'
+            }"
+          >
+            <el-table-column prop="name" label="文件名" min-width="250">
+              <template #default="{ row }">
+                <div class="file-name-cell">
+                  <ArtSvgIcon
+                    :icon="row.isFolder ? 'ri:folder-3-fill' : getDocIcon(row.type)"
+                    class="file-icon"
+                    :class="{ 'folder-icon': row.isFolder }"
+                  />
+                  <span class="file-name">{{ row.name }}</span>
+                </div>
+              </template>
+            </el-table-column>
+
+            <el-table-column prop="size" label="大小" width="120">
+              <template #default="{ row }">
+                <span v-if="!row.isFolder" class="file-size">{{ formatFileSize(row.size) }}</span>
+                <span v-else class="folder-count">{{ row.children?.length || 0 }} 项</span>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="类型" width="120">
+              <template #default="{ row }">
+                <el-tag
+                  :type="row.isFolder ? 'warning' : 'primary'"
+                  effect="plain"
+                  size="small"
+                >
+                  {{ row.isFolder ? '文件夹' : typeMap[row.type] || row.type || '文件' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="状态" width="120">
+              <template #default="{ row }">
+                <el-tag
+                  :type="row.status === 'normal' ? 'success' : 'info'"
+                  effect="dark"
+                  size="small"
+                >
+                  {{ statusMap[row.status] || row.status }}
+                </el-tag>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="是否已有表格" width="140">
+              <template #default="{ row }">
+                <div v-if="!row.isFolder" class="table-badge">
+                  <ArtSvgIcon
+                    :icon="row.hasTable ? 'ri:checkbox-circle-fill' : 'ri:indeterminate-circle-line'"
+                    :class="row.hasTable ? 'has-table' : 'no-table'"
+                  />
+                  <span>{{ row.hasTable ? '是' : '否' }}</span>
+                </div>
+                <span v-else class="text-gray">-</span>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="操作" width="280" fixed="right">
+              <template #default="{ row }">
+                <div class="action-btns">
+                  <el-button
+                    size="small"
+                    @click="previewDocument(row)"
+                    :disabled="row.isFolder"
+                    class="table-action-btn preview"
+                  >
+                    <ArtSvgIcon icon="ri:eye-line" class="mr-1" />
+                    预览
+                  </el-button>
+                  <el-button
+                    v-if="!row.isFolder"
+                    size="small"
+                    type="primary"
+                    plain
+                    @click="moveItem(row)"
+                    class="table-action-btn move"
+                  >
+                    <ArtSvgIcon icon="ri:drag-move-line" class="mr-1" />
+                    移动
+                  </el-button>
+                  <el-button
+                    size="small"
+                    type="danger"
+                    plain
+                    @click="deleteItem(row)"
+                    class="table-action-btn delete"
+                  >
+                    <ArtSvgIcon icon="ri:delete-bin-line" class="mr-1" />
+                    删除
+                  </el-button>
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <div v-if="treeData.length === 0 && !loading" class="empty-documents">
+            <div class="empty-icon">📂</div>
+            <p class="empty-text">暂无文档</p>
+            <p class="empty-hint">选择文档库后上传文件</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 对话框组件保持不变 -->
+    <el-dialog v-model="previewDialog" title="文档预览" width="80%" class="preview-dialog">
+      <div v-html="previewContent" class="preview-content"></div>
+    </el-dialog>
+
+    <el-dialog
+      v-model="showCreateLibDialog"
+      title="新建文档库"
+      width="30%"
+      @close="resetCreateLibForm"
+      class="modern-dialog"
+    >
+      <el-form :model="createLibForm" :rules="createLibRules" ref="createLibFormRef">
+        <el-form-item label="文档库名称" prop="name">
+          <el-input
+            v-model="createLibForm.name"
+            placeholder="请输入文档库名称"
+            class="dialog-input"
+          >
+            <template #prefix>
+              <ArtSvgIcon icon="ri:database-2-line" class="input-icon" />
+            </template>
+          </el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showCreateLibDialog = false" class="cancel-btn">取消</el-button>
+          <el-button type="primary" @click="handleCreateLib" :loading="creatingLib" class="confirm-btn">
+            <ArtSvgIcon icon="ri:check-line" class="mr-1" />
+            确定
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="showEditLibDialog"
+      title="编辑文档库"
+      width="30%"
+      @close="resetEditLibForm"
+      class="modern-dialog"
+    >
+      <el-form :model="editLibForm" :rules="editLibRules" ref="editLibFormRef">
+        <el-form-item label="文档库名称" prop="name">
+          <el-input
+            v-model="editLibForm.name"
+            placeholder="请输入文档库名称"
+            class="dialog-input"
+          >
+            <template #prefix>
+              <ArtSvgIcon icon="ri:database-2-line" class="input-icon" />
+            </template>
+          </el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showEditLibDialog = false" class="cancel-btn">取消</el-button>
+          <el-button type="primary" @click="handleEditLib" :loading="editingLib" class="confirm-btn">
+            <ArtSvgIcon icon="ri:check-line" class="mr-1" />
+            确定
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="showCreateFolderDialog"
+      title="新建文件夹"
+      width="30%"
+      class="modern-dialog"
+    >
+      <el-form :model="createFolderForm" :rules="createFolderRules">
+        <el-form-item label="文件夹名称" prop="name">
+          <el-input
+            v-model="createFolderForm.name"
+            placeholder="请输入文件夹名称"
+            class="dialog-input"
+          >
+            <template #prefix>
+              <ArtSvgIcon icon="ri:folder-line" class="input-icon" />
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="父文件夹">
           <el-tree-select
-            v-model="selectedFolderId"
+            v-model="createFolderForm.parentId"
             :data="folderTreeOptions"
             :props="{ label: 'name', children: 'children', value: 'id' }"
-            placeholder="选择上传目录（默认根目录）"
+            placeholder="请选择父文件夹（默认根目录）"
             clearable
             filterable
             :expand-on-click-node="false"
-            @node-click="handleTreeNodeClick"
-            style="width: 240px"
-            :disabled="uploadingActive"
+            @node-click="handleParentNodeClick"
+            class="modern-select"
           />
-        </div>
-
-        <!-- 编辑文档库按钮（移除权限限制） -->
-        <el-button
-          type="primary"
-          plain
-          :icon="Edit"
-          :disabled="!selectedLibId || uploadingActive"
-          @click="openEditLibDialog"
-        >
-          编辑
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showCreateFolderDialog = false" class="cancel-btn">取消</el-button>
+        <el-button type="primary" @click="handleCreateFolder" :loading="creatingFolder" class="confirm-btn">
+          <ArtSvgIcon icon="ri:check-line" class="mr-1" />
+          确定
         </el-button>
-
-        <!-- 删除文档库按钮 -->
-        <el-button
-          type="danger"
-          plain
-          :icon="Delete"
-          :disabled="!selectedLibId || uploadingActive"
-          @click="handleDeleteLib"
-        >
-          删除
-        </el-button>
-
-        <el-button
-          type="primary"
-          plain
-          @click="showCreateLibDialog = true"
-          :disabled="uploadingActive"
-        >
-          新建文档库
-        </el-button>
-
-        <el-button
-          type="success"
-          plain
-          @click="showCreateFolderDialog = true"
-          :disabled="!selectedLibId || uploadingActive"
-        >
-          新建文件夹
-        </el-button>
-
-        <el-button
-          type="primary"
-          @click="confirmUpload"
-          :loading="uploadingActive"
-          :disabled="!selectedLibId || fileList.length === 0"
-        >
-          {{ uploadingActive ? '上传中...' : '确认上传' }}
-        </el-button>
-
-        <el-button @click="clearFileList" :disabled="uploadingActive || fileList.length === 0">
-          清空缓存
-        </el-button>
-
-        <span v-if="fileList.length > 0" class="text-sm text-gray-500">
-          已缓存 {{ fileList.length }} 个文件
-        </span>
-      </div>
-
-      <!-- 上传区域 -->
-      <el-upload
-        ref="uploadRef"
-        class="upload-demo"
-        drag
-        :auto-upload="false"
-        v-model:file-list="fileList"
-        multiple
-        :limit="10"
-        :accept="'.docx,.md,.xlsx,.txt'"
-        :before-upload="beforeUpload"
-        :disabled="uploadingActive"
-      >
-        <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
-        <div v-if="!uploadingActive">
-          <div class="el-upload__text">将文件拖到此处，或 <em>点击上传</em></div>
-          <!-- 自定义文件卡片列表 -->
-        </div>
-        <div v-else class="progress-container">
-          <p>正在上传: {{ currentUploadFileName }}</p>
-          <div class="progress-bar">
-            <div class="progress-fill" :style="{ width: `${currentUploadProgress}%` }"></div>
-          </div>
-          <span>{{ currentUploadProgress }}%</span>
-          <p class="text-sm mt-1">进度: {{ uploadedCount }} / {{ totalUploadCount }}</p>
-        </div>
-        <template #tip>
-          <div class="el-upload__tip">
-            支持 docx、md、xlsx、txt 格式， 请先选择文档库，再添加文件，最后点击【确认上传】
-          </div>
-        </template>
-      </el-upload>
-    </div>
-
-    <div class="mb-4">
-      <h3 class="text-lg font-semibold mb-2">已导入文档</h3>
-      <el-table
-        :data="treeData"
-        row-key="id"
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-        v-loading="loading"
-        border
-      >
-        <el-table-column prop="name" label="文件名" />
-        <el-table-column prop="size" label="大小" />
-        <el-table-column label="类型">
-          <template #default="{ row }">
-            <span>{{ row.isFolder ? '文件夹' : typeMap[row.type] || row.type || '文件' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="状态">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'normal' ? 'success' : 'info'">
-              {{ statusMap[row.status] || row.status }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="是否已有表格">
-          <template #default="{ row }">
-            {{ row.isFolder ? '-' : row.hasTable ? '是' : '否' }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="220">
-          <template #default="{ row }">
-            <el-button size="small" @click="previewDocument(row)" :disabled="row.isFolder">
-              预览
-            </el-button>
-            <el-button size="small" type="danger" @click="deleteItem(row)"> 删除 </el-button>
-            <el-button
-              v-if="!row.isFolder"
-              size="small"
-              type="primary"
-              plain
-              @click="moveItem(row)"
-            >
-              移动
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-
-    <el-dialog v-model="previewDialog" title="文档预览" width="80%">
-      <div v-html="previewContent"></div>
+      </template>
     </el-dialog>
   </div>
-  <!-- 新建文档库对话框 -->
-  <el-dialog
-    v-model="showCreateLibDialog"
-    title="新建文档库"
-    width="30%"
-    @close="resetCreateLibForm"
-  >
-    <el-form :model="createLibForm" :rules="createLibRules" ref="createLibFormRef">
-      <el-form-item label="文档库名称" prop="name">
-        <el-input v-model="createLibForm.name" placeholder="请输入文档库名称" />
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="showCreateLibDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleCreateLib" :loading="creatingLib"> 确定 </el-button>
-      </span>
-    </template>
-  </el-dialog>
-
-  <!-- 编辑文档库对话框 -->
-  <el-dialog v-model="showEditLibDialog" title="编辑文档库" width="30%" @close="resetEditLibForm">
-    <el-form :model="editLibForm" :rules="editLibRules" ref="editLibFormRef">
-      <el-form-item label="文档库名称" prop="name">
-        <el-input v-model="editLibForm.name" placeholder="请输入文档库名称" />
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="showEditLibDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleEditLib" :loading="editingLib"> 确定 </el-button>
-      </span>
-    </template>
-  </el-dialog>
-
-  <el-dialog v-model="showCreateFolderDialog" title="新建文件夹" width="30%">
-    <el-form :model="createFolderForm" :rules="createFolderRules">
-      <el-form-item label="文件夹名称" prop="name">
-        <el-input v-model="createFolderForm.name" placeholder="请输入文件夹名称" />
-      </el-form-item>
-      <el-form-item label="父文件夹">
-        <el-tree-select
-          v-model="createFolderForm.parentId"
-          :data="folderTreeOptions"
-          :props="{ label: 'name', children: 'children', value: 'id' }"
-          placeholder="请选择父文件夹（默认根目录）"
-          clearable
-          filterable
-          :expand-on-click-node="false"
-          @node-click="handleParentNodeClick"
-        />
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <el-button @click="showCreateFolderDialog = false">取消</el-button>
-      <el-button type="primary" @click="handleCreateFolder" :loading="creatingFolder"
-        >确定</el-button
-      >
-    </template>
-  </el-dialog>
 </template>
 
 <script setup lang="ts">
@@ -251,6 +490,8 @@
   import * as folderApi from '@/api/folder'
   import axios from 'axios'
   import { useUserStore } from '@/store/modules/user'
+
+  defineOptions({ name: 'DocImport' })
 
   const userStore = useUserStore()
   // import FileCardList from '@/views/doc-extraction/import/FireCardList.vue'
@@ -883,58 +1124,622 @@
       await loadDocuments()
     }
   })
+
+  // 新增辅助函数
+  const getDocIcon = (type?: string) => {
+    const icons: Record<string, string> = {
+      'docx': 'ri:file-word-2-line',
+      'xlsx': 'ri:file-excel-2-line',
+      'pdf': 'ri:file-pdf-line',
+      'txt': 'ri:file-text-line',
+      'md': 'ri:markdown-line'
+    }
+    return icons[type?.toLowerCase() || ''] || 'ri:file-line'
+  }
+
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return '-'
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB'
+    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
+    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB'
+  }
 </script>
 
 <style scoped>
-  .doc-import {
-    padding: 20px;
+  .doc-import-container {
+    padding: 24px;
+    min-height: calc(100vh - 120px);
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
   }
 
-  .flex {
+  .import-workspace {
+    max-width: 1600px;
+    margin: 0 auto;
     display: flex;
+    flex-direction: column;
+    gap: 24px;
   }
 
-  .items-center {
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  /* 文档库面板 */
+  .library-panel {
+    border-radius: 20px;
+    padding: 28px;
+  }
+
+  .panel-header {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid rgba(168, 237, 234, 0.3);
+  }
+
+  .header-content {
+    display: flex;
     align-items: center;
+    gap: 16px;
   }
 
-  .gap-4 {
-    gap: 1rem;
+  .header-icon {
+    font-size: 40px;
+    animation: float 3s ease-in-out infinite;
   }
 
-  .mb-4 {
-    margin-bottom: 1rem;
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
   }
 
-  .mt-1 {
-    margin-top: 0.25rem;
+  .panel-title {
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0 0 4px 0;
   }
 
-  .text-sm {
-    font-size: 0.875rem;
+  .panel-subtitle {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
   }
 
-  .text-gray-500 {
-    color: #6b7280;
+  .library-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
   }
 
-  .progress-container {
+  .control-group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .select-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .select-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+  }
+
+  .label-icon {
+    font-size: 16px;
+    color: #667eea;
+  }
+
+  .modern-select {
+    width: 100%;
+  }
+
+  .option-lib,
+  .tree-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .lib-icon,
+  .folder-icon {
+    font-size: 16px;
+    color: #667eea;
+  }
+
+  .action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .action-btn {
+    border-radius: 10px;
+    transition: all 0.3s;
+  }
+
+  .action-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .create-lib-btn {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(56, 142, 60, 0.1) 100%);
+  }
+
+  /* 上传区域 */
+  .upload-section {
+    margin-top: 4px;
+  }
+
+  .upload-card {
+    border-radius: 20px;
+    padding: 28px;
+  }
+
+  .upload-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .upload-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+  }
+
+  .title-icon {
+    font-size: 24px;
+    color: #667eea;
+  }
+
+  .modern-upload {
+    width: 100%;
+  }
+
+  .modern-upload :deep(.el-upload-dragger) {
+    padding: 0;
+    border: none;
+    background: transparent;
+  }
+
+  .upload-dragger {
+    padding: 50px 40px;
     text-align: center;
-    width: 100%;
-    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
   }
 
-  .progress-bar {
-    width: 100%;
-    background-color: #f0f0f0;
-    border-radius: 4px;
-    overflow: hidden;
-    margin: 10px 0;
+  .upload-icon-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 24px;
   }
 
-  .progress-fill {
-    height: 20px;
-    background-color: #409eff;
+  .icon-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    border: 3px solid #667eea;
+    border-radius: 50%;
+    opacity: 0.2;
+    animation: ring-pulse 2s infinite;
+  }
+
+  @keyframes ring-pulse {
+    0%, 100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.2;
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.15);
+      opacity: 0.1;
+    }
+  }
+
+  .upload-main-icon {
+    font-size: 72px;
+    color: #667eea;
+    filter: drop-shadow(0 8px 16px rgba(102, 126, 234, 0.3));
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .upload-text-content {
+    margin-bottom: 24px;
+  }
+
+  .upload-main-text {
+    font-size: 18px;
+    color: #333;
+    margin: 0 0 10px 0;
+    font-weight: 600;
+  }
+
+  .highlight-text {
+    color: #667eea;
+    font-style: normal;
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: rgba(102, 126, 234, 0.3);
+  }
+
+  .upload-hint {
+    font-size: 14px;
+    color: #999;
+    margin: 0;
+  }
+
+  .supported-formats {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .format-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+
+  .format-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .format-badge.docx {
+    background: linear-gradient(135deg, rgba(66, 133, 244, 0.15) 0%, rgba(66, 133, 244, 0.05) 100%);
+    color: #4285f4;
+    border: 1px solid rgba(66, 133, 244, 0.3);
+  }
+
+  .format-badge.xlsx {
+    background: linear-gradient(135deg, rgba(52, 168, 83, 0.15) 0%, rgba(52, 168, 83, 0.05) 100%);
+    color: #34a853;
+    border: 1px solid rgba(52, 168, 83, 0.3);
+  }
+
+  .format-badge.md {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.15) 0%, rgba(255, 152, 0, 0.05) 100%);
+    color: #ff9800;
+    border: 1px solid rgba(255, 152, 0, 0.3);
+  }
+
+  .format-badge.txt {
+    background: linear-gradient(135deg, rgba(158, 158, 158, 0.15) 0%, rgba(158, 158, 158, 0.05) 100%);
+    color: #9e9e9e;
+    border: 1px solid rgba(158, 158, 158, 0.3);
+  }
+
+  .upload-progress {
+    padding: 50px 40px;
+    text-align: center;
+  }
+
+  .progress-animation {
+    margin-bottom: 24px;
+  }
+
+  .loading-spinner {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto;
+    border: 4px solid rgba(102, 126, 234, 0.2);
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .progress-info {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .current-file {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 16px;
+    color: #333;
+    font-weight: 600;
+    margin: 0 0 20px 0;
+  }
+
+  .file-icon {
+    font-size: 20px;
+    color: #667eea;
+  }
+
+  .progress-bar-wrapper {
+    margin-bottom: 16px;
+  }
+
+  .upload-progress-bar :deep(.el-progress-bar__outer) {
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .upload-progress-bar :deep(.el-progress-bar__inner) {
+    border-radius: 10px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
     transition: width 0.3s ease;
+  }
+
+  .progress-detail {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+  }
+
+  .upload-tip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 16px;
+    padding: 12px;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #666;
+  }
+
+  .tip-icon {
+    font-size: 16px;
+    color: #667eea;
+  }
+
+  .upload-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    justify-content: center;
+  }
+
+  .confirm-upload-btn {
+    border-radius: 12px;
+    padding: 14px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    transition: all 0.3s;
+  }
+
+  .confirm-upload-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+  }
+
+  .clear-btn {
+    border-radius: 12px;
+    padding: 14px 32px;
+    font-size: 16px;
+  }
+
+  /* 文档列表 */
+  .documents-section {
+    margin-top: 4px;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+  }
+
+  .refresh-btn {
+    border-radius: 8px;
+    transition: all 0.3s;
+  }
+
+  .refresh-btn:hover {
+    background: rgba(102, 126, 234, 0.1);
+  }
+
+  .rotating {
+    animation: spin 1s linear infinite;
+  }
+
+  .table-wrapper {
+    border-radius: 16px;
+    padding: 20px;
+    overflow: hidden;
+  }
+
+  .modern-table {
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .file-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .file-icon {
+    font-size: 20px;
+    color: #667eea;
+  }
+
+  .folder-icon {
+    color: #ffa726;
+  }
+
+  .file-name {
+    font-weight: 500;
+    color: #333;
+  }
+
+  .file-size,
+  .folder-count {
+    font-size: 13px;
+    color: #666;
+  }
+
+  .table-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .has-table {
+    color: #4caf50;
+    font-size: 16px;
+  }
+
+  .no-table {
+    color: #999;
+    font-size: 16px;
+  }
+
+  .text-gray {
+    color: #999;
+  }
+
+  .action-btns {
+    display: flex;
+    gap: 8px;
+  }
+
+  .table-action-btn {
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+
+  .table-action-btn:hover {
+    transform: scale(1.05);
+  }
+
+  .empty-documents {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+  }
+
+  .empty-icon {
+    font-size: 56px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  .empty-text {
+    font-size: 16px;
+    margin: 0 0 8px 0;
+  }
+
+  .empty-hint {
+    font-size: 13px;
+    margin: 0;
+    opacity: 0.7;
+  }
+
+  /* 对话框样式 */
+  .modern-dialog :deep(.el-dialog) {
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .dialog-input :deep(.el-input__wrapper) {
+    border-radius: 10px;
+    border: 2px solid rgba(102, 126, 234, 0.2);
+    transition: all 0.3s;
+  }
+
+  .dialog-input :deep(.el-input__wrapper):hover,
+  .dialog-input :deep(.el-input__wrapper).is-focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .input-icon {
+    color: #667eea;
+  }
+
+  .dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  .cancel-btn {
+    border-radius: 10px;
+  }
+
+  .confirm-btn {
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+  }
+
+  .preview-content {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    .control-group {
+      grid-template-columns: 1fr;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+    }
+
+    .upload-actions {
+      flex-direction: column;
+    }
+
+    .section-header {
+      flex-direction: column;
+      gap: 16px;
+      align-items: flex-start;
+    }
   }
 </style>
