@@ -11,7 +11,7 @@
             </div>
             <div class="header-text">
               <h2 class="panel-title">多文档智能提表</h2>
-              <p class="panel-subtitle">基于自然语言指令，从多个文档中提取结构化表格数据</p>
+              <p class="panel-subtitle">基于自然语言指令，从多个文档中提取结构化表格数据（流式）</p>
             </div>
           </div>
           <div class="header-badge">
@@ -91,7 +91,7 @@
             />
             <p class="prompt-hint">
               <ArtSvgIcon icon="ri:information-line" class="hint-icon" />
-              使用自然语言描述您想提取的字段，AI会自动理解并执行
+              使用自然语言描述您想提取的字段，AI会自动理解并执行（流式实时返回）
             </p>
           </div>
 
@@ -157,7 +157,10 @@
         </div>
       </Transition>
 
-      <div v-if="extractedOnce" class="empty-state glass-effect">
+      <div
+        v-if="extractedOnce && extractResults.length === 0 && !extracting"
+        class="empty-state glass-effect"
+      >
         <div class="empty-animation">
           <div class="empty-icon">📭</div>
           <div class="pulse-ring"></div>
@@ -170,11 +173,12 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, onMounted } from 'vue'
+  import { ref, reactive, onMounted, onUnmounted } from 'vue'
   import { ElMessage } from 'element-plus'
   import { getDocList } from '@/api/doc'
   import { getTemplateList } from '@/api/templates'
-  import { extractSpecifiedTables } from '@/api/table'
+  // 不再直接使用 extractSpecifiedTables，改为流式 fetch
+  // import { extractSpecifiedTables } from '@/api/table'
 
   // 表单数据
   const extractForm = reactive({
@@ -194,7 +198,16 @@
   const extractedOnce = ref(false)
   const activeTab = ref('0')
 
-  // 仅补充辅助函数
+  // 用于中断流式请求
+  let abortController: AbortController | null = null
+
+  // 辅助函数：获取 token（根据项目实际存储方式调整）
+  const getAuthToken = () => {
+    // 示例：从 localStorage 获取，实际请使用项目中的 auth 模块
+    return localStorage.getItem('token') || ''
+  }
+
+  // 辅助函数：获取文档图标
   const getDocIcon = (name: string) => {
     const ext = name.split('.').pop()?.toLowerCase()
     if (ext === 'docx') return 'ri:file-word-2-line'
@@ -207,16 +220,14 @@
     try {
       // 1. 加载模板列表
       const templateRes = await getTemplateList()
-      // 后端返回 { templates: [...] }
       const templatesList = templateRes.templates || []
       templates.value = templatesList.map((item: any) => ({
         id: item.id,
         name: item.name
       }))
 
-      // 2. 加载数据源（所有文档，后续可扩展树形结构）
+      // 2. 加载数据源
       const docsRes = await getDocList(undefined, undefined)
-      // getDocList 直接返回文档数组（后端无 data 包裹）
       const docsList = docsRes.docs || []
       dataSources.value = docsList.map((doc: any) => ({
         id: doc.id,
@@ -228,7 +239,7 @@
     }
   }
 
-  // 开始提取
+  // 开始提取（流式）
   const handleExtract = async () => {
     if (extractForm.templateIds.length === 0) {
       ElMessage.warning('请至少选择一个模板文档')
@@ -243,53 +254,187 @@
       return
     }
 
+    // 如果已有进行中的请求，先中断
+    if (abortController) {
+      abortController.abort()
+    }
+
+    // 重置状态
     extracting.value = true
     extractedOnce.value = true
+    extractResults.value = [] // 清空旧结果
+    activeTab.value = '0'
+
+    // 用于存储 schema 映射：schema_id -> 表格在 extractResults 中的索引
+    const schemaMap = new Map<number, number>()
+    // 用于暂存未找到对应 schema 的 row（理论上不会出现，但做防御）
+    const pendingRows: { schemaId: number; cells: string[] }[] = []
+
+    // 创建 AbortController
+    abortController = new AbortController()
 
     try {
-      const res = await extractSpecifiedTables({
-        doc_ids: extractForm.docIds,
-        template_ids: extractForm.templateIds,
-        user_prompt: extractForm.userPrompt
+      const baseURL = import.meta.env.VITE_API_BASE_URL || ''
+      const url = `${baseURL}/api/table/extract-specified`
+      const token = getAuthToken()
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          doc_ids: extractForm.docIds,
+          template_ids: extractForm.templateIds,
+          user_prompt: extractForm.userPrompt
+        }),
+        signal: abortController.signal
       })
 
-      const tables = res.tables || []
-      if (tables.length === 0) {
-        ElMessage.info('未提取到任何表格数据')
-        extractResults.value = []
-        return
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 
-      extractResults.value = tables.map((item: any) => {
-        const tableData = item.table
-        const columns = tableData.headers || []
-        const rows = (tableData.rows || []).map((row: any) => {
-          const rowObj: Record<string, string> = {}
-          columns.forEach((col: string, idx: number) => {
-            rowObj[col] = row.cells?.[idx] || ''
-          })
-          return rowObj
-        })
-        return {
-          columns,
-          rows,
-          tableId: item.table_id,
-          templateId: item.template_id
-        }
-      })
+      if (!response.body) {
+        throw new Error('当前浏览器不支持流式响应')
+      }
 
-      activeTab.value = '0'
-      ElMessage.success(`成功提取 ${extractResults.value.length} 个表格`)
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder('utf-8')
+      let buffer = '' // 用于存储不完整的行
+
+      // 逐块读取流
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        // 将新数据追加到缓冲区
+        buffer += decoder.decode(value, { stream: true })
+        // 按换行符分割
+        const lines = buffer.split('\n')
+        // 最后一行可能不完整，保留到下一次
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (!line.trim()) continue
+          try {
+            const message = JSON.parse(line)
+            await processStreamMessage(message, schemaMap, pendingRows)
+          } catch (e) {
+            console.warn('解析流消息失败:', line, e)
+          }
+        }
+      }
+
+      // 处理最后可能剩余的不完整行
+      if (buffer.trim()) {
+        try {
+          const message = JSON.parse(buffer)
+          await processStreamMessage(message, schemaMap, pendingRows)
+        } catch (e) {
+          console.warn('解析最后一条消息失败:', buffer, e)
+        }
+      }
+
+      // 流正常结束，未收到 done 事件也认为完成
+      ElMessage.success(`提取完成，共 ${extractResults.value.length} 个表格`)
     } catch (error: any) {
-      console.error('提取失败:', error)
-      ElMessage.error(error.message || '提取失败，请检查后端服务')
+      if (error.name === 'AbortError') {
+        console.log('流式请求已中断')
+        ElMessage.info('提取已取消')
+      } else {
+        console.error('流式提取失败:', error)
+        ElMessage.error(error.message || '提取失败，请检查后端服务')
+      }
     } finally {
       extracting.value = false
+      abortController = null
+      // 如果没有任何表格数据，提示空结果
+      if (extractResults.value.length === 0 && extractedOnce.value) {
+        ElMessage.info('未提取到任何表格数据')
+      }
     }
   }
 
-  // 清空结果
+  // 处理流式消息（info, data, done）
+  const processStreamMessage = async (
+    message: any,
+    schemaMap: Map<number, number>,
+    pendingRows: { schemaId: number; cells: string[] }[]
+  ) => {
+    const { event, data } = message
+    if (event === 'info') {
+      // 可选：控制台输出或轻提示（避免频繁弹窗）
+      console.log('[Info]', data)
+      return
+    }
+
+    if (event === 'done') {
+      console.log('[Done] 提取结束')
+      return
+    }
+
+    if (event === 'data' && data) {
+      let payload: any
+      try {
+        // data 字段是一个 JSON 字符串，需要二次解析
+        payload = typeof data === 'string' ? JSON.parse(data) : data
+      } catch (e) {
+        console.warn('解析 data 字段失败:', data, e)
+        return
+      }
+
+      const { type } = payload
+      if (type === 'schema') {
+        // 处理表结构
+        const schemas = payload.schema // 数组，每个元素包含 name, fields 等
+        if (Array.isArray(schemas)) {
+          for (let idx = 0; idx < schemas.length; idx++) {
+            const schemaItem = schemas[idx]
+            const fields = schemaItem.fields || []
+            const columns = fields.map((field: any) => field.name)
+            const newTable = {
+              columns,
+              rows: []
+            }
+            extractResults.value.push(newTable)
+            // 映射 schema_id 到表格索引
+            schemaMap.set(idx, extractResults.value.length - 1)
+          }
+        }
+      } else if (type === 'row') {
+        // 处理行数据
+        const { table } = payload
+        if (table && typeof table.schema_id === 'number') {
+          const schemaId = table.schema_id
+          const rowCells = table.row?.cells || []
+          const tableIndex = schemaMap.get(schemaId)
+          if (tableIndex !== undefined) {
+            const targetTable = extractResults.value[tableIndex]
+            if (targetTable) {
+              const rowObj: Record<string, string> = {}
+              targetTable.columns.forEach((col, colIdx) => {
+                rowObj[col] = rowCells[colIdx] || ''
+              })
+              targetTable.rows.push(rowObj)
+            }
+          } else {
+            // 防御：暂存未找到 schema 的行（理论上不会发生）
+            pendingRows.push({ schemaId, cells: rowCells })
+          }
+        }
+      }
+    }
+  }
+
+  // 清空结果，并中断正在进行的请求
   const clearResults = () => {
+    if (abortController) {
+      abortController.abort()
+      abortController = null
+      extracting.value = false
+    }
     extractResults.value = []
     extractedOnce.value = false
     activeTab.value = '0'
@@ -298,10 +443,17 @@
   onMounted(() => {
     loadDocuments()
   })
+
+  onUnmounted(() => {
+    // 组件卸载时中断请求
+    if (abortController) {
+      abortController.abort()
+    }
+  })
 </script>
 
 <style scoped>
-  /* 同样采用玻璃拟态风格，与文档导入页面保持一致 */
+  /* 样式保持不变，省略... 实际使用时保留原样式 */
   .data-filling-container {
     padding: 24px;
     min-height: calc(100vh - 120px);
