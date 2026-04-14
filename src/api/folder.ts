@@ -30,11 +30,11 @@ export function folderCreate(params: Api.Folder.FolderCreateParams) {
 /**
  * 更新文件夹
  */
-export function updateFolder(lib_id: number, name: string) {
+export function updateFolder(id: number, name: string) {
   return request.put<Api.BaseResponse>({
     url: '/api/folder',
     data: {
-      lib_id,
+      id,
       name
     }
   })
@@ -48,4 +48,3 @@ export function deleteFolder(id: number) {
     url: `/api/folder/${id}`
   })
 }
-

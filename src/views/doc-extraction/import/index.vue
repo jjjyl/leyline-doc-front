@@ -318,31 +318,37 @@
             <el-table-column label="操作" width="280" fixed="right">
               <template #default="{ row }">
                 <div class="action-btns">
+                  <!-- 预览按钮（仅文件显示） -->
                   <el-button
+                    v-if="!row.isFolder"
                     size="small"
                     @click="previewDocument(row)"
-                    :disabled="row.isFolder"
                     class="table-action-btn preview"
                   >
                     <ArtSvgIcon icon="ri:eye-line" class="mr-1" />
                     预览
                   </el-button>
+
+                  <!-- 编辑按钮（文件和文件夹都显示） -->
                   <el-button
-                    v-if="!row.isFolder"
                     size="small"
                     type="primary"
                     plain
-                    @click="moveItem(row)"
-                    class="table-action-btn move"
+                    @click="openEditDialog(row)"
+                    :disabled="uploadingActive"
+                    class="table-action-btn edit"
                   >
-                    <ArtSvgIcon icon="ri:drag-move-line" class="mr-1" />
-                    移动
+                    <ArtSvgIcon icon="ri:edit-line" class="mr-1" />
+                    编辑
                   </el-button>
+
+                  <!-- 删除按钮 -->
                   <el-button
                     size="small"
                     type="danger"
                     plain
                     @click="deleteItem(row)"
+                    :disabled="uploadingActive"
                     class="table-action-btn delete"
                   >
                     <ArtSvgIcon icon="ri:delete-bin-line" class="mr-1" />
@@ -473,6 +479,37 @@
           type="primary"
           @click="handleCreateFolder"
           :loading="creatingFolder"
+          class="confirm-btn"
+        >
+          <ArtSvgIcon icon="ri:check-line" class="mr-1" />
+          确定
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 编辑名称对话框 -->
+    <el-dialog
+      v-model="editDialogVisible"
+      :title="editTarget?.type === 'folder' ? '编辑文件夹名称' : '编辑文件名称'"
+      width="30%"
+      class="modern-dialog"
+      @close="resetEditForm"
+    >
+      <el-form :model="editForm" :rules="editFormRules" ref="editFormRef">
+        <el-form-item label="名称" prop="name">
+          <el-input v-model="editForm.name" placeholder="请输入新名称" class="dialog-input">
+            <template #prefix>
+              <ArtSvgIcon icon="ri:edit-line" class="input-icon" />
+            </template>
+          </el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false" class="cancel-btn">取消</el-button>
+        <el-button
+          type="primary"
+          @click="handleEditConfirm"
+          :loading="editingName"
           class="confirm-btn"
         >
           <ArtSvgIcon icon="ri:check-line" class="mr-1" />
@@ -1146,6 +1183,70 @@
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB'
     if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
     return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB'
+  }
+
+  // 编辑相关
+  const editDialogVisible = ref(false)
+  const editingName = ref(false)
+  const editFormRef = ref()
+  const editForm = ref({
+    name: ''
+  })
+  const editTarget = ref<{ type: 'file' | 'folder'; id: number; libId?: number } | null>(null)
+
+  const editFormRules = {
+    name: [
+      { required: true, message: '请输入名称', trigger: 'blur' },
+      { min: 1, max: 100, message: '长度在 1 到 100 个字符', trigger: 'blur' }
+    ]
+  }
+
+  // 打开编辑对话框
+  const openEditDialog = (item: any) => {
+    editTarget.value = {
+      type: item.isFolder ? 'folder' : 'file',
+      id: item.id,
+      libId: item.libId
+    }
+    editForm.value.name = item.name
+    editDialogVisible.value = true
+  }
+
+  // 重置编辑表单
+  const resetEditForm = () => {
+    editForm.value.name = ''
+    editTarget.value = null
+    editFormRef.value?.clearValidate()
+  }
+
+  // 确认编辑
+  const handleEditConfirm = async () => {
+    if (!editTarget.value) return
+    try {
+      await editFormRef.value.validate()
+      editingName.value = true
+
+      if (editTarget.value.type === 'folder') {
+        // 调用文件夹更新API
+        await folderApi.updateFolder(editTarget.value.id, editForm.value.name)
+        ElMessage.success('文件夹重命名成功')
+      } else {
+        // 调用文档更新API
+        await docApi.updateDoc({ id: editTarget.value.id, name: editForm.value.name })
+        ElMessage.success('文件重命名成功')
+      }
+
+      editDialogVisible.value = false
+      // 刷新文档列表
+      await loadDocuments()
+    } catch (error: any) {
+      if (error !== 'cancel') {
+        console.error('重命名失败:', error)
+        ElMessage.error('重命名失败，请重试')
+      }
+    } finally {
+      editingName.value = false
+    }
   }
 </script>
 
