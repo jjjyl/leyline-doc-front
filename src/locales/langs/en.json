@@ -224,6 +224,9 @@
     "dashboard": {
       "title": "Workbench"
     },
+    "chat": {
+      "title": "AI Chat"
+    },
     "widgets": {
       "title": "Components",
       "icon": "Icon",
@@ -239,16 +242,6 @@
       "textScroll": "Text Scroll",
       "fireworks": "Fireworks",
       "elementUI": "Component Overview"
-    },
-    "template": {
-      "title": "Template Center",
-      "chat": "Chat",
-      "cards": "Cards",
-      "banners": "Banners",
-      "charts": "Charts",
-      "map": "Map",
-      "calendar": "Calendar",
-      "pricing": "Pricing"
     },
     "article": {
       "title": "Article",

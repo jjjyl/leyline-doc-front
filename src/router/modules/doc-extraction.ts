@@ -17,7 +17,7 @@ export const docExtractionRoutes: AppRouteRecord = {
       meta: {
         title: '文档导入',
         icon: 'ri:upload-line',
-        keepAlive: true,
+        keepAlive: false,
         authList: [
           { title: '导入文档', authMark: 'import' },
           { title: '批量导入', authMark: 'batch' }
@@ -31,7 +31,7 @@ export const docExtractionRoutes: AppRouteRecord = {
       meta: {
         title: '信息提取',
         icon: 'ri:magic-line',
-        keepAlive: true,
+        keepAlive: false,
         authList: [
           { title: '开始提取', authMark: 'extract' },
           { title: '自定义规则', authMark: 'custom' }
@@ -45,7 +45,7 @@ export const docExtractionRoutes: AppRouteRecord = {
       meta: {
         title: '数据存储',
         icon: 'ri:database-line',
-        keepAlive: true,
+        keepAlive: false,
         authList: [
           { title: '配置存储', authMark: 'config' },
           { title: '备份恢复', authMark: 'backup' }

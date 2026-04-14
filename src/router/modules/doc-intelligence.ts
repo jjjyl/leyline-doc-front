@@ -11,6 +11,16 @@ export const docIntelligenceRoutes: AppRouteRecord = {
   },
   children: [
     {
+      path: 'guide',
+      name: 'OperationGuide',
+      component: '/doc-intelligence/guide',
+      meta: {
+        title: '新手教程',
+        icon: 'ri:graduation-cap-line',
+        keepAlive: true
+      }
+    },
+    {
       path: 'operation',
       name: 'DocOperation',
       component: '/doc-intelligence/operation',
@@ -22,16 +32,6 @@ export const docIntelligenceRoutes: AppRouteRecord = {
           { title: '执行操作', authMark: 'execute' },
           { title: '查看历史', authMark: 'history' }
         ]
-      }
-    },
-    {
-      path: 'guide',
-      name: 'OperationGuide',
-      component: '/doc-intelligence/guide',
-      meta: {
-        title: '操作引导',
-        icon: 'ri:question-line',
-        keepAlive: true
       }
     }
   ]

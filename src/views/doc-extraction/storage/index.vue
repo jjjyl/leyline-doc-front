@@ -97,6 +97,8 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+defineOptions({ name: 'DataStorage' })
+
 const configForm = reactive({
   dbType: 'mysql',
   host: 'localhost',

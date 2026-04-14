@@ -58,6 +58,7 @@
 
 <script setup lang="ts">
   import { computed } from 'vue'
+  import { useRouter } from 'vue-router'
   import type { AppRouteRecord } from '@/types/router'
   import { formatMenuTitle } from '@/utils/router'
   import { handleMenuJump } from '@/utils/navigation'
@@ -96,8 +97,9 @@
   const emit = defineEmits<Emits>()
 
   const settingStore = useSettingStore()
+  const router = useRouter()
 
-  const { menuOpen } = storeToRefs(settingStore)
+  const { menuOpen, refresh } = storeToRefs(settingStore)
 
   /**
    * 过滤后的菜单项列表
@@ -109,8 +111,18 @@
    * 跳转到指定页面
    * @param item 菜单项数据
    */
-  const goPage = (item: AppRouteRecord): void => {
+  const goPage = async (item: AppRouteRecord): Promise<void> => {
     closeMenu()
+
+    const currentPath = router.currentRoute.value.path
+    const targetPath = item.path
+
+    // 无论是否是相同路径，都触发刷新
+    refresh.value = !refresh.value
+
+    // 延迟一小段时间再跳转，确保刷新生效
+    await new Promise(resolve => setTimeout(resolve, 50))
+
     handleMenuJump(item)
   }
 

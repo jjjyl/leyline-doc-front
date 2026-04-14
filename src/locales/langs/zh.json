@@ -224,6 +224,9 @@
     "dashboard": {
       "title": "工作台"
     },
+    "chat": {
+      "title": "智能对话"
+    },
     "widgets": {
       "title": "组件中心",
       "icon": "图标",
@@ -239,16 +242,6 @@
       "textScroll": "文字滚动",
       "fireworks": "礼花",
       "elementUI": "组件总览"
-    },
-    "template": {
-      "title": "模板中心",
-      "chat": "聊天",
-      "cards": "卡片",
-      "banners": "横幅",
-      "charts": "图表",
-      "map": "地图",
-      "calendar": "日历",
-      "pricing": "定价"
     },
     "article": {
       "title": "文章管理",

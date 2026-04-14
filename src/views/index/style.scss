@@ -6,6 +6,8 @@
 
   #app-sidebar {
     flex-shrink: 0;
+    position: relative;
+    z-index: 1;
   }
 
   #app-main {
@@ -15,6 +17,8 @@
     min-width: 0;
     height: 100vh;
     overflow: auto;
+    position: relative;
+    z-index: 1;
 
     #app-header {
       position: sticky;
@@ -22,6 +26,8 @@
       z-index: 50;
       flex-shrink: 0;
       width: 100%;
+      backdrop-filter: blur(10px);
+      background: rgba(var(--default-bg-color), 0.9);
     }
 
     #app-content {
@@ -36,10 +42,16 @@
         .page-content {
           position: relative;
           box-sizing: border-box;
-          padding: 20px;
+          padding: 24px;
           overflow: hidden;
           background: var(--default-box-color);
-          border-radius: calc(var(--custom-radius) / 2 + 2px) !important;
+          border-radius: calc(var(--custom-radius) / 2 + 4px) !important;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+          &:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+          }
         }
       }
     }
