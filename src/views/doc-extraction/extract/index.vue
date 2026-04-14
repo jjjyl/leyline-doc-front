@@ -73,61 +73,6 @@
             </div>
           </div>
 
-          <!-- 提取类型选择 -->
-          <div class="extraction-types-section">
-            <label class="section-label">
-              <ArtSvgIcon icon="ri:checkbox-multiple-line" class="label-icon" />
-              <span>提取类型</span>
-            </label>
-            <div class="type-chips-grid">
-              <div
-                v-for="type in extractionTypes"
-                :key="type.value"
-                class="type-chip"
-                :class="{ active: extractForm.types.includes(type.value) }"
-                @click="toggleType(type.value)"
-              >
-                <div class="chip-content">
-                  <span class="chip-icon">{{ type.icon }}</span>
-                  <span class="chip-label">{{ type.label }}</span>
-                </div>
-                <div class="chip-check" v-if="extractForm.types.includes(type.value)">
-                  <ArtSvgIcon icon="ri:check-line" />
-                </div>
-                <el-checkbox
-                  v-model="extractForm.types"
-                  :label="type.value"
-                  class="hidden-checkbox"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- 自定义规则 -->
-          <Transition name="expand">
-            <div v-if="extractForm.types.includes('自定义')" class="custom-rule-section">
-              <label class="section-label">
-                <ArtSvgIcon icon="ri:settings-3-line" class="label-icon" />
-                <span>自定义规则</span>
-              </label>
-              <el-input
-                v-model="extractForm.customRule"
-                placeholder="例如：仅提取合同文档中的甲方、乙方、合同期限、金额信息"
-                class="rule-input"
-                type="textarea"
-                :rows="3"
-              >
-                <template #prefix>
-                  <ArtSvgIcon icon="ri:lightbulb-flash-line" class="input-icon" />
-                </template>
-              </el-input>
-              <p class="rule-hint">
-                <ArtSvgIcon icon="ri:information-line" class="hint-icon" />
-                使用自然语言描述您想提取的信息，AI会自动理解并执行
-              </p>
-            </div>
-          </Transition>
-
           <!-- 操作按钮 -->
           <div class="action-area">
             <el-button
@@ -346,18 +291,8 @@
 
   const extractForm = reactive({
     libId: null as number | null,
-    documentId: null,
-    types: [] as string[],
-    customRule: ''
+    documentId: null
   })
-
-  const extractionTypes = [
-    { value: '实体', label: '实体识别', icon: '👤', desc: '人名、地名、机构名等' },
-    { value: '关键词', label: '关键词', icon: '🔑', desc: '核心词汇提取' },
-    { value: '金额', label: '金额', icon: '💰', desc: '货币数值识别' },
-    { value: '日期', label: '日期', icon: '📅', desc: '时间信息提取' },
-    { value: '自定义', label: '自定义', icon: '⚙️', desc: '个性化规则' }
-  ]
 
   const documents = ref<Array<Api.Doc.DocInfo>>([])
   const libList = ref<Array<Api.DocLib.DocLibInfo>>([])
@@ -411,15 +346,6 @@
       md: 'ri:markdown-line'
     }
     return icons[type?.toLowerCase() || ''] || 'ri:file-line'
-  }
-
-  const toggleType = (type: string) => {
-    const index = extractForm.types.indexOf(type)
-    if (index > -1) {
-      extractForm.types.splice(index, 1)
-    } else {
-      extractForm.types.push(type)
-    }
   }
 
   onMounted(async () => {
@@ -754,150 +680,6 @@
 
   .option-text {
     flex: 1;
-  }
-
-  /* 提取类型 */
-  .extraction-types-section {
-    margin-bottom: 24px;
-  }
-
-  .section-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #555;
-    margin-bottom: 12px;
-  }
-
-  .type-chips-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-  }
-
-  .type-chip {
-    position: relative;
-    padding: 16px;
-    background: rgba(255, 255, 255, 0.6);
-    border: 2px solid rgba(102, 126, 234, 0.15);
-    border-radius: 14px;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
-  }
-
-  .type-chip:hover {
-    background: rgba(102, 126, 234, 0.08);
-    border-color: rgba(102, 126, 234, 0.4);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
-  }
-
-  .type-chip.active {
-    background: linear-gradient(
-      135deg,
-      rgba(102, 126, 234, 0.15) 0%,
-      rgba(118, 75, 162, 0.15) 100%
-    );
-    border-color: #667eea;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
-  }
-
-  .chip-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .chip-icon {
-    font-size: 28px;
-  }
-
-  .chip-label {
-    font-size: 14px;
-    font-weight: 600;
-    color: #333;
-  }
-
-  .chip-check {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 22px;
-    height: 22px;
-    background: #667eea;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 14px;
-    animation: check-pop 0.3s ease-out;
-  }
-
-  @keyframes check-pop {
-    0% {
-      transform: scale(0);
-    }
-    50% {
-      transform: scale(1.2);
-    }
-    100% {
-      transform: scale(1);
-    }
-  }
-
-  .hidden-checkbox {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  /* 自定义规则 */
-  .custom-rule-section {
-    margin-bottom: 28px;
-  }
-
-  .rule-input :deep(.el-textarea__inner) {
-    border-radius: 12px;
-    border: 2px solid rgba(102, 126, 234, 0.2);
-    transition: all 0.3s;
-    font-size: 14px;
-    line-height: 1.6;
-  }
-
-  .rule-input :deep(.el-textarea__inner):hover {
-    border-color: #667eea;
-  }
-
-  .rule-input :deep(.el-textarea__inner):focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
-
-  .input-icon {
-    color: #667eea;
-    font-size: 16px;
-  }
-
-  .rule-hint {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 10px;
-    padding: 10px 14px;
-    background: rgba(102, 126, 234, 0.05);
-    border-radius: 8px;
-    font-size: 13px;
-    color: #666;
-  }
-
-  .hint-icon {
-    color: #667eea;
-    font-size: 16px;
   }
 
   /* 操作区域 */

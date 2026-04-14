@@ -222,10 +222,7 @@
       "title": "Outside"
     },
     "dashboard": {
-      "title": "Dashboard",
-      "console": "Console",
-      "analysis": "Analysis",
-      "ecommerce": "Ecommerce"
+      "title": "Workbench"
     },
     "widgets": {
       "title": "Components",
@@ -317,11 +314,15 @@
       "title": "Table Filling",
       "template": "Template Import",
       "filling": "Data Filling",
-      "export": "Export Share"
+      "export": "Export & Share"
+    },
+    "tableManager": {
+      "title": "Table Manager",
+      "manage": "Table Management"
     },
     "safeguard": {
       "title": "Safeguard",
-      "server": "Server"
+      "server": "Server Management"
     },
     "plan": {
       "title": "Version Plan",
