@@ -157,33 +157,16 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="300" fixed="right">
+            <el-table-column label="操作" width="360" fixed="right">
               <template #default="{ row }">
-                <div class="action-btns">
-                  <el-button size="small" @click="viewTables(row)" class="table-action-btn view">
-                    <ArtSvgIcon icon="ri:eye-line" class="mr-1" />
-                    查看表格
-                  </el-button>
-                  <el-button
-                    size="small"
-                    type="primary"
-                    plain
-                    @click="extractTables(row)"
-                    class="table-action-btn extract"
+                <div style="display: flex; gap: 8px; flex-wrap: nowrap">
+                  <el-button size="small" @click="viewTables(row)">查看表格</el-button>
+                  <el-button size="small" type="primary" plain @click="extractTables(row)"
+                    >提取表格</el-button
                   >
-                    <ArtSvgIcon icon="ri:download-2-line" class="mr-1" />
-                    提取表格
-                  </el-button>
-                  <el-button
-                    size="small"
-                    type="danger"
-                    plain
-                    @click="deleteDocument(row)"
-                    class="table-action-btn delete"
+                  <el-button size="small" type="danger" plain @click="deleteDocument(row)"
+                    >删除</el-button
                   >
-                    <ArtSvgIcon icon="ri:delete-bin-line" class="mr-1" />
-                    删除
-                  </el-button>
                 </div>
               </template>
             </el-table-column>
@@ -275,6 +258,14 @@
   const tableDialog = ref(false)
   const activeTableIndex = ref('0')
   const currentTables = ref<TableData[]>([])
+
+  // 仅补充辅助函数
+  const getDocIcon = (name: string) => {
+    const ext = name.split('.').pop()?.toLowerCase()
+    if (ext === 'docx') return 'ri:file-word-2-line'
+    if (ext === 'xlsx') return 'ri:file-excel-2-line'
+    return 'ri:file-line'
+  }
 
   // 加载模板列表
   const loadTemplates = async () => {
