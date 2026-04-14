@@ -60,12 +60,7 @@
                 placeholder="请选择文档"
                 class="modern-select"
               >
-                <el-option
-                  v-for="doc in documents"
-                  :key="doc.id"
-                  :label="doc.name"
-                  :value="doc.id"
-                >
+                <el-option v-for="doc in documents" :key="doc.id" :label="doc.name" :value="doc.id">
                   <div class="option-content">
                     <ArtSvgIcon :icon="getDocIcon(doc.type)" class="option-icon" />
                     <span class="option-text">{{ doc.name }}</span>
@@ -259,7 +254,8 @@
             :data="extractionHistory"
             class="modern-table"
             :header-cell-style="{
-              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+              background:
+                'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
               color: '#333',
               fontWeight: '600',
               fontSize: '14px'
@@ -298,7 +294,9 @@
                   class="status-tag"
                 >
                   <ArtSvgIcon
-                    :icon="row.status === 'normal' ? 'ri:checkbox-circle-fill' : 'ri:error-warning-line'"
+                    :icon="
+                      row.status === 'normal' ? 'ri:checkbox-circle-fill' : 'ri:error-warning-line'
+                    "
                     class="mr-1"
                   />
                   {{ row.status === 'normal' ? '正常' : row.status }}
@@ -386,9 +384,10 @@
       const res = await docLibApi.fetchDocLibs()
       libList.value = res || []
       if (libList.value.length > 0) {
-        extractForm.libId = extractForm.libId && libList.value.some((lib) => lib.libId === extractForm.libId)
-          ? extractForm.libId
-          : libList.value[0]?.libId || null
+        extractForm.libId =
+          extractForm.libId && libList.value.some((lib) => lib.libId === extractForm.libId)
+            ? extractForm.libId
+            : libList.value[0]?.libId || null
       } else {
         extractForm.libId = null
         ElMessage.warning('暂无文档库，请先创建文档库')
@@ -405,11 +404,11 @@
 
   const getDocIcon = (type?: string) => {
     const icons: Record<string, string> = {
-      'docx': 'ri:file-word-2-line',
-      'xlsx': 'ri:file-excel-2-line',
-      'pdf': 'ri:file-pdf-line',
-      'txt': 'ri:file-text-line',
-      'md': 'ri:markdown-line'
+      docx: 'ri:file-word-2-line',
+      xlsx: 'ri:file-excel-2-line',
+      pdf: 'ri:file-pdf-line',
+      txt: 'ri:file-text-line',
+      md: 'ri:markdown-line'
     }
     return icons[type?.toLowerCase() || ''] || 'ri:file-line'
   }
@@ -437,7 +436,12 @@
   const progressStatus = ref<'success' | 'warning' | 'exception' | undefined>()
 
   const results = reactive({
-    entities: [] as Array<{ type: string; value: string; confidence: string; positions?: string[] }>,
+    entities: [] as Array<{
+      type: string
+      value: string
+      confidence: string
+      positions?: string[]
+    }>,
     keywords: [] as string[],
     amounts: [] as string[],
     dates: [] as string[],
@@ -499,7 +503,7 @@
 
   const catchHistory = async () => {
     await loadDocuments()
-    extractionHistory.value = documents.value.filter((doc) => doc.has_table).slice(0, 10)
+    extractionHistory.value = documents.value.filter((doc) => doc.hasTable).slice(0, 10)
   }
 
   const exportResults = () => {
@@ -543,11 +547,11 @@
   }
 
   const typeMap: Record<string, string> = {
-    'docx': 'Word文档',
-    'xlsx': 'Excel表格',
-    'pdf': 'PDF文档',
-    'txt': '文本文件',
-    'md': 'Markdown'
+    docx: 'Word文档',
+    xlsx: 'Excel表格',
+    pdf: 'PDF文档',
+    txt: '文本文件',
+    md: 'Markdown'
   }
 </script>
 
@@ -613,8 +617,15 @@
   }
 
   @keyframes pulse-bg {
-    0%, 100% { transform: scale(1); opacity: 0.6; }
-    50% { transform: scale(1.1); opacity: 0.8; }
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: scale(1.1);
+      opacity: 0.8;
+    }
   }
 
   .header-icon {
@@ -625,8 +636,13 @@
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
   }
 
   .header-text {
@@ -661,8 +677,15 @@
   }
 
   @keyframes sparkle {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.2); }
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.2);
+    }
   }
 
   /* 表单样式 */
@@ -773,7 +796,11 @@
   }
 
   .type-chip.active {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(102, 126, 234, 0.15) 0%,
+      rgba(118, 75, 162, 0.15) 100%
+    );
     border-color: #667eea;
     box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
   }
@@ -812,9 +839,15 @@
   }
 
   @keyframes check-pop {
-    0% { transform: scale(0); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
+    0% {
+      transform: scale(0);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1);
+    }
   }
 
   .hidden-checkbox {
@@ -904,8 +937,12 @@
   }
 
   @keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .progress-controls {
@@ -959,7 +996,11 @@
   .spinner-icon {
     width: 56px;
     height: 56px;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(102, 126, 234, 0.15) 0%,
+      rgba(118, 75, 162, 0.15) 100%
+    );
     border-radius: 14px;
     display: flex;
     align-items: center;
@@ -1013,8 +1054,12 @@
   }
 
   @keyframes gradient-shift {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 200% 50%; }
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: 200% 50%;
+    }
   }
 
   .percentage-value {

@@ -157,14 +157,14 @@
         </div>
       </Transition>
 
-      <!--      <div v-else-if="extractedOnce" class="empty-state glass-effect">-->
-      <!--        <div class="empty-animation">-->
-      <!--          <div class="empty-icon">📭</div>-->
-      <!--          <div class="pulse-ring"></div>-->
-      <!--        </div>-->
-      <!--        <p class="empty-text">暂无提取结果</p>-->
-      <!--        <p class="empty-hint">请选择模板、数据源并输入指令后点击“开始提取”</p>-->
-      <!--      </div>-->
+      <div v-if="extractedOnce" class="empty-state glass-effect">
+        <div class="empty-animation">
+          <div class="empty-icon">📭</div>
+          <div class="pulse-ring"></div>
+        </div>
+        <p class="empty-text">暂无提取结果</p>
+        <p class="empty-hint">请选择模板、数据源并输入指令后点击“开始提取”</p>
+      </div>
     </div>
   </div>
 </template>

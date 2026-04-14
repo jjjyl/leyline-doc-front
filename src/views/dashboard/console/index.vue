@@ -3,11 +3,11 @@
   <div>
     <CardList></CardList>
 
-    <ElRow :gutter="20">
-      <ElCol :sm="24" :lg="24">
-        <DocUploader />
-      </ElCol>
-    </ElRow>
+    <!--    <ElRow :gutter="20">-->
+    <!--      <ElCol :sm="24" :lg="24">-->
+    <!--        <DocUploader />-->
+    <!--      </ElCol>-->
+    <!--    </ElRow>-->
 
     <ElRow :gutter="20">
       <ElCol :sm="24" :md="12" :lg="10">
