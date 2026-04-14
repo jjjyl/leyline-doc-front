@@ -1,4 +1,3 @@
-<!-- src/components/DocumentTreeSelect/index.vue -->
 <template>
   <div class="document-tree-select">
     <el-tree-select
@@ -7,21 +6,37 @@
       :data="treeOptions"
       :props="treeProps"
       :placeholder="placeholder"
-      :disabled="disabled"
+      :disabled="disabled || !libId"
       :clearable="clearable"
       :filterable="filterable"
       :loading="loading"
       :class="['tree-select', customClass]"
+      value-key="value"
       @clear="handleClear"
-      @node-click="handleNodeClick"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, watch, nextTick } from 'vue'
-  import { useDocFolderTree, type TreeNode } from '@/views/doc-extraction/Tree/TreeNode/treeNode'
+  import { ref, computed, watch } from 'vue'
+  import * as docApi from '@/api/doc'
+  import * as folderApi from '@/api/folder'
 
+  // ---------- 类型定义 ----------
+  interface TreeNode {
+    id: number
+    name: string
+    parentId: number
+    isFolder: boolean
+    children?: TreeNode[]
+    type?: string
+    size?: number
+    hasTable?: boolean
+    status?: string
+    uploaderId?: number
+  }
+
+  // ---------- Props ----------
   const props = withDefaults(
     defineProps<{
       libId: number | null
@@ -46,31 +61,122 @@
     (e: 'change', value: number | null): void
   }>()
 
-  const { treeData, loading, loadTreeData } = useDocFolderTree(computed(() => props.libId))
-
-  // 内部选中的 key（带前缀）
+  // ---------- 状态 ----------
+  const loading = ref(false)
+  const treeData = ref<TreeNode[]>([])
   const selectedKey = ref<string | null>(null)
 
-  // 树形选择器的配置
+  // ---------- 树配置 ----------
   const treeProps = {
     label: 'name',
     children: 'children',
-    disabled: (data: any) => data.disabled === true,
+    disabled: (data: any) => data.isFolder === true,
     isLeaf: (data: any) => !data.children || data.children.length === 0
   }
 
-  // 将树节点转换为 el-tree-select 所需格式
+  // ---------- 数据加载 ----------
+  const loadTreeData = async () => {
+    const currentLibId = props.libId
+    if (!currentLibId) {
+      treeData.value = []
+      return
+    }
+
+    loading.value = true
+    try {
+      const [docRes, folderRes] = await Promise.all([
+        docApi.getDocList(undefined, currentLibId),
+        folderApi.getFolderList(currentLibId)
+      ])
+
+      const docs = (docRes.docs || []).map((d: any) => ({
+        id: d.id,
+        name: d.name,
+        parentId: d.parent_id,
+        isFolder: false,
+        type: d.type,
+        size: d.size,
+        hasTable: d.has_table,
+        status: d.status,
+        uploaderId: d.uploader_id
+      }))
+
+      const folders = (folderRes.folders || []).map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        parentId: f.parent_id,
+        isFolder: true,
+        children: []
+      }))
+
+      treeData.value = buildTree(folders, docs)
+    } catch (error) {
+      console.error('加载文档树失败:', error)
+      treeData.value = []
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 构建树形结构
+  function buildTree(folders: TreeNode[], docs: TreeNode[]): TreeNode[] {
+    const folderMap = new Map<number, TreeNode>()
+    const result: TreeNode[] = []
+
+    folders.forEach((folder) => {
+      folderMap.set(folder.id, { ...folder, children: [] })
+    })
+
+    docs.forEach((doc) => {
+      const node = { ...doc }
+      if (doc.parentId === 0) {
+        result.push(node)
+      } else {
+        const parent = folderMap.get(doc.parentId)
+        if (parent) {
+          parent.children!.push(node)
+        } else {
+          result.push(node)
+        }
+      }
+    })
+
+    folders.forEach((folder) => {
+      const node = folderMap.get(folder.id)!
+      if (folder.parentId === 0) {
+        result.push(node)
+      } else {
+        const parent = folderMap.get(folder.parentId)
+        if (parent) {
+          parent.children!.push(node)
+        } else {
+          result.push(node)
+        }
+      }
+    })
+
+    const clean = (nodes: TreeNode[]) => {
+      nodes.forEach((n) => {
+        if (n.children && n.children.length === 0) delete n.children
+        else if (n.children) clean(n.children)
+      })
+    }
+    clean(result)
+    return result
+  }
+
+  // ---------- 转换为 el-tree-select 需要的格式（必须包含 value 字段）----------
   const treeOptions = computed(() => {
     const convert = (nodes: TreeNode[]): any[] => {
       return nodes.map((node) => {
-        const isFolder = node.isFolder
-        const key = isFolder ? `folder_${node.id}` : `doc_${node.id}`
+        // 文档的 value 使用 doc_前缀+id，文件夹也生成 value 但会被 disabled
+        const value = node.isFolder ? `folder_${node.id}` : `doc_${node.id}`
         return {
           id: node.id,
           name: node.name,
-          key: key,
-          disabled: isFolder, // 文件夹不可选
-          isFolder: isFolder,
+          value: value, // 关键：绑定 v-model 需要 value 字段
+          isFolder: node.isFolder,
+          disabled: node.isFolder,
           children: node.children ? convert(node.children) : undefined
         }
       })
@@ -78,20 +184,18 @@
     return convert(treeData.value)
   })
 
-  // 将文档 ID 转换为带前缀的 key
-  const docIdToKey = (docId: number | null): string | null => {
-    if (docId === null) return null
-    return `doc_${docId}`
+  // ---------- key 与 id 转换 ----------
+  const docIdToKey = (id: number | null): string | null => {
+    if (id === null) return null
+    return `doc_${id}`
   }
-
-  // 将带前缀的 key 转换为文档 ID
   const keyToDocId = (key: string | null): number | null => {
     if (!key) return null
     const match = key.match(/^doc_(\d+)$/)
     return match ? parseInt(match[1], 10) : null
   }
 
-  // 监听外部 modelValue 变化，同步内部 selectedKey
+  // ---------- 双向绑定 ----------
   watch(
     () => props.modelValue,
     (newVal) => {
@@ -103,7 +207,6 @@
     { immediate: true }
   )
 
-  // 监听内部 selectedKey 变化，同步到外部
   watch(selectedKey, (newKey) => {
     const docId = keyToDocId(newKey)
     if (props.modelValue !== docId) {
@@ -112,23 +215,30 @@
     }
   })
 
+  // ---------- 监听 libId 变化并加载数据 ----------
+  watch(
+    () => props.libId,
+    (newLibId) => {
+      if (newLibId) {
+        loadTreeData()
+      } else {
+        treeData.value = []
+      }
+      // 清空选中值
+      if (selectedKey.value) {
+        selectedKey.value = null
+      }
+    },
+    { immediate: true }
+  )
+
   // 清空处理
   const handleClear = () => {
     selectedKey.value = null
   }
 
-  // 节点点击处理（可选，用于额外逻辑）
-  const handleNodeClick = (data: any) => {
-    if (data.disabled) {
-      // 文件夹不可选，可给出提示
-      // ElMessage.info('请选择文档文件')
-    }
-  }
-
   // 暴露刷新方法
-  defineExpose({
-    refresh: loadTreeData
-  })
+  defineExpose({ refresh: loadTreeData })
 </script>
 
 <style scoped>

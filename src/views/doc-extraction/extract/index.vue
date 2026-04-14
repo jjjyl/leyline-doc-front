@@ -297,7 +297,7 @@
   const loadDocuments = async () => {
     try {
       loading.value = true
-      const res = await docApi.getDocList(parentId.value, extractForm.libId)
+      const res = await docApi.getDocList(undefined, extractForm.libId)
       documents.value = res.docs || []
       if (documents.value.length > 0) {
         ElMessage.success(`获取到 ${documents.value.length} 条文档`)
