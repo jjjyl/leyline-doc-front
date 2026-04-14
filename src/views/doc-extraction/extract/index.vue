@@ -298,7 +298,11 @@
     try {
       loading.value = true
       const res = await docApi.getDocList(undefined, extractForm.libId)
-      documents.value = res.docs || []
+      // 映射后端字段：将 has_table 转为 hasTable
+      documents.value = (res.docs || []).map((doc: any) => ({
+        ...doc,
+        hasTable: doc.has_table ?? false
+      }))
       if (documents.value.length > 0) {
         ElMessage.success(`获取到 ${documents.value.length} 条文档`)
       }
