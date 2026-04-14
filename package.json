@@ -76,6 +76,7 @@
     "vue-draggable-plus": "^0.6.0",
     "vue-i18n": "^9.14.0",
     "vue-router": "^4.5.1",
+    "vxe-table": "^4.18.12",
     "xgplayer": "^3.0.20",
     "xlsx": "^0.18.5"
   },

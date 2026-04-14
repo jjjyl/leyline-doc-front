@@ -141,21 +141,79 @@
               :name="idx.toString()"
             >
               <div class="table-container">
-                <el-table :data="table.rows" border stripe class="result-table">
-                  <el-table-column
+                <!-- 原 el-table 替换为 vxe-table -->
+                <vxe-table
+                  :data="table.rows"
+                  height="500"
+                  :scroll-y="{ enabled: true, gt: 50 }"
+                  border
+                  stripe
+                >
+                  <vxe-column
                     v-for="col in table.columns"
                     :key="col"
-                    :prop="col"
-                    :label="col"
+                    :field="col"
+                    :title="col"
                     min-width="120"
                     show-overflow-tooltip
                   />
-                </el-table>
+                </vxe-table>
               </div>
             </el-tab-pane>
           </el-tabs>
         </div>
       </Transition>
+
+      <!-- 新增：提取历史面板 -->
+      <div class="history-panel glass-effect" v-if="extractionHistory.length > 0">
+        <div class="panel-header">
+          <div class="header-left">
+            <h3 class="panel-title">
+              <ArtSvgIcon icon="ri:history-line" class="title-icon" />
+              提取历史
+            </h3>
+            <el-tag type="info" effect="plain" class="count-badge">
+              {{ extractionHistory.length }} 个表格
+            </el-tag>
+          </div>
+          <div class="header-right">
+            <el-button type="success" size="small" @click="exportHistory" class="action-btn">
+              <ArtSvgIcon icon="ri:download-line" />
+              导出历史
+            </el-button>
+            <el-button type="danger" size="small" @click="clearHistory" class="action-btn">
+              <ArtSvgIcon icon="ri:delete-bin-line" />
+              清空历史
+            </el-button>
+          </div>
+        </div>
+        <vxe-table
+          :data="extractionHistory"
+          height="400"
+          :scroll-y="{ enabled: true, gt: 20 }"
+          border
+          stripe
+        >
+          <vxe-column field="tableName" title="表格名称" min-width="180" show-overflow-tooltip />
+          <vxe-column
+            field="dataSources"
+            title="数据源文档"
+            min-width="200"
+            show-overflow-tooltip
+          />
+          <vxe-column field="templates" title="模板文档" min-width="200" show-overflow-tooltip />
+          <vxe-column field="rowCount" title="行数" width="80" align="center" />
+          <vxe-column field="colCount" title="列数" width="80" align="center" />
+          <vxe-column field="extractTime" title="提取时间" width="160" />
+          <vxe-column title="操作" width="120" fixed="right">
+            <template #default="{ row }">
+              <el-button size="small" type="primary" @click="viewTableDetail(row)">
+                查看详情
+              </el-button>
+            </template>
+          </vxe-column>
+        </vxe-table>
+      </div>
 
       <div
         v-if="extractedOnce && extractResults.length === 0 && !extracting"
@@ -169,6 +227,35 @@
         <p class="empty-hint">请选择模板、数据源并输入指令后点击“开始提取”</p>
       </div>
     </div>
+
+    <!-- 表格详情对话框 -->
+    <el-dialog
+      v-model="tableDialogVisible"
+      :title="`表格详情：${currentTable.title || '未命名'}`"
+      width="80%"
+      destroy-on-close
+      class="table-detail-dialog"
+    >
+      <vxe-table
+        :data="currentTable.rows"
+        height="500"
+        :scroll-y="{ enabled: true, gt: 50 }"
+        border
+        stripe
+      >
+        <vxe-column
+          v-for="col in currentTable.columns"
+          :key="col"
+          :field="col"
+          :title="col"
+          min-width="120"
+          show-overflow-tooltip
+        />
+      </vxe-table>
+      <template #footer>
+        <el-button @click="tableDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -177,6 +264,7 @@
   import { ElMessage } from 'element-plus'
   import { getDocList } from '@/api/doc'
   import { getTemplateList } from '@/api/templates'
+
   // 不再直接使用 extractSpecifiedTables，改为流式 fetch
   // import { extractSpecifiedTables } from '@/api/table'
 
@@ -200,6 +288,148 @@
 
   // 用于中断流式请求
   let abortController: AbortController | null = null
+
+  // ---------- 批量更新缓冲机制 ----------
+  // 缓冲区：存储每个表格待追加的行数据 (key: 表格索引, value: 行对象数组)
+  const pendingRowsMap = new Map<number, any[]>()
+  let batchUpdateTimer: number | null = null
+  // 批量更新间隔（毫秒），可根据实际情况调整（50~150ms 较平滑）
+  const BATCH_UPDATE_INTERVAL = 50
+  // 最大积累行数，达到后立即刷新（防止数据积压过多导致最后一次性渲染太多）
+  const MAX_PENDING_ROWS = 200
+
+  // 启动批量更新定时器
+  const startBatchUpdater = () => {
+    if (batchUpdateTimer) return
+    batchUpdateTimer = window.setInterval(() => {
+      flushPendingRows()
+    }, BATCH_UPDATE_INTERVAL)
+  }
+
+  // 停止批量更新定时器并清空缓冲区
+  const stopBatchUpdater = () => {
+    if (batchUpdateTimer) {
+      clearInterval(batchUpdateTimer)
+      batchUpdateTimer = null
+    }
+    // 最后一次刷新缓冲区（确保剩余数据被渲染）
+    flushPendingRows()
+  }
+
+  // 将缓冲区中的行批量追加到表格中
+  const flushPendingRows = () => {
+    if (pendingRowsMap.size === 0) return
+    for (const [tableIdx, rows] of pendingRowsMap.entries()) {
+      if (rows.length === 0) continue
+      const targetTable = extractResults.value[tableIdx]
+      if (targetTable) {
+        // 使用 push(...rows) 批量追加，只触发一次响应式更新
+        targetTable.rows.push(...rows)
+      }
+      // 清空该表对应的缓冲区
+      pendingRowsMap.set(tableIdx, [])
+    }
+  }
+
+  // 向缓冲区添加一行
+  const addRowToBuffer = (tableIndex: number, rowObj: Record<string, string>) => {
+    if (!pendingRowsMap.has(tableIndex)) {
+      pendingRowsMap.set(tableIndex, [])
+    }
+    const rows = pendingRowsMap.get(tableIndex)!
+    rows.push(rowObj)
+    // 若积压行数超过阈值，立即刷新，避免内存积压过多
+    if (rows.length >= MAX_PENDING_ROWS) {
+      flushPendingRows()
+    }
+  }
+
+  // ---------- 新增：提取历史管理 ----------
+  interface HistoryItem {
+    id: string // 唯一标识
+    tableName: string // 表格名称（取自 schema.name）
+    dataSources: string // 数据源文档名称（逗号拼接）
+    templates: string // 模板文档名称（逗号拼接）
+    rowCount: number
+    colCount: number
+    extractTime: string
+    tableData: { columns: string[]; rows: any[] } // 完整表格数据
+  }
+  const extractionHistory = ref<HistoryItem[]>([])
+  const tableDialogVisible = ref(false)
+  const currentTable = ref<{ title: string; columns: string[]; rows: any[] }>({
+    title: '',
+    columns: [],
+    rows: []
+  })
+
+  // 生成唯一ID
+  const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 8)}`
+
+  // 添加表格到历史记录（自动去重：相同表格名称+数据源+模板视为同一表格，覆盖更新）
+  const addToHistory = (tableItem: { columns: string[]; rows: any[] }, schemaName: string) => {
+    const dataSourceNames = extractForm.docIds
+      .map((id) => dataSources.value.find((ds) => ds.id === id)?.name || `文档${id}`)
+      .join(', ')
+    const templateNames = extractForm.templateIds
+      .map((id) => templates.value.find((t) => t.id === id)?.name || `模板${id}`)
+      .join(', ')
+    const key = `${schemaName}|${dataSourceNames}|${templateNames}`
+    const existingIndex = extractionHistory.value.findIndex(
+      (item) => `${item.tableName}|${item.dataSources}|${item.templates}` === key
+    )
+    const newItem: HistoryItem = {
+      id: generateId(),
+      tableName: schemaName,
+      dataSources: dataSourceNames,
+      templates: templateNames,
+      rowCount: tableItem.rows.length,
+      colCount: tableItem.columns.length,
+      extractTime: new Date().toLocaleString(),
+      tableData: { columns: tableItem.columns, rows: [...tableItem.rows] }
+    }
+    if (existingIndex !== -1) {
+      extractionHistory.value[existingIndex] = newItem
+    } else {
+      extractionHistory.value.unshift(newItem) // 最新在上
+    }
+  }
+
+  // 查看表格详情
+  const viewTableDetail = (item: HistoryItem) => {
+    currentTable.value = {
+      title: item.tableName,
+      columns: item.tableData.columns,
+      rows: item.tableData.rows
+    }
+    tableDialogVisible.value = true
+  }
+
+  // 导出历史记录
+  const exportHistory = () => {
+    if (extractionHistory.value.length === 0) {
+      ElMessage.warning('暂无历史记录')
+      return
+    }
+    const exportData = extractionHistory.value.map(({ id, tableData, ...rest }) => rest)
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `extraction_history_${Date.now()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    ElMessage.success('历史记录已导出')
+  }
+
+  // 清空历史记录（同时清空当前提取结果）
+  const clearHistory = () => {
+    extractionHistory.value = []
+    extractResults.value = []
+    extractedOnce.value = false
+    activeTab.value = '0'
+    ElMessage.success('历史记录已清空')
+  }
 
   // 辅助函数：获取 token（根据项目实际存储方式调整）
   const getAuthToken = () => {
@@ -239,6 +469,124 @@
     }
   }
 
+  // 处理流式消息（修改：在 schema 处理时记录表格名称，在 row 收集完成后不自动加入历史，等待 done 时统一加入）
+  let currentExtractSchemas: Array<{ name: string; tableIndex: number }> = [] // 存储本次提取的表格名称与 extractResults 索引的对应
+
+  const processStreamMessage = async (
+    message: any,
+    schemaMap: Map<number, number>,
+    pendingRows: { schemaId: number; cells: string[] }[]
+  ) => {
+    const { event, data } = message
+    if (event === 'info') {
+      console.log('[Info]', data)
+      return
+    }
+    if (event === 'done') {
+      console.log('[Done] 提取结束')
+      // 处理所有尚未匹配的 pendingRows（兜底）
+      if (pendingRows.length > 0) {
+        console.warn(`[Done] 尚有 ${pendingRows.length} 行未匹配到 schema，尝试重新匹配`)
+        for (const pending of pendingRows) {
+          const tableIndex = schemaMap.get(pending.schemaId)
+          if (tableIndex !== undefined) {
+            const targetTable = extractResults.value[tableIndex]
+            if (targetTable) {
+              const rowObj: Record<string, string> = {}
+              targetTable.columns.forEach((col, colIdx) => {
+                rowObj[col] = pending.cells[colIdx] || ''
+              })
+              addRowToBuffer(tableIndex, rowObj)
+            }
+          } else {
+            console.error(`无法匹配 schema_id ${pending.schemaId}，行数据丢失`, pending.cells)
+          }
+        }
+        // 清空 pendingRows
+        pendingRows.length = 0
+      }
+      // 强制刷新所有缓冲区
+      flushPendingRows()
+      // 将本次所有表格加入历史记录
+      for (const schema of currentExtractSchemas) {
+        const tableData = extractResults.value[schema.tableIndex]
+        if (tableData && tableData.rows.length > 0) {
+          addToHistory(tableData, schema.name)
+        }
+      }
+      currentExtractSchemas = []
+      stopBatchUpdater()
+      return
+    }
+    if (event === 'data' && data) {
+      let payload: any
+      try {
+        payload = typeof data === 'string' ? JSON.parse(data) : data
+      } catch (e) {
+        console.warn('解析 data 字段失败:', data, e)
+        return
+      }
+      const { type } = payload
+      if (type === 'schema') {
+        const schemas = payload.schema
+        if (Array.isArray(schemas)) {
+          for (let idx = 0; idx < schemas.length; idx++) {
+            const schemaItem = schemas[idx]
+            const fields = schemaItem.fields || []
+            const columns = fields.map((field: any) => field.name)
+            const newTable = { columns, rows: [] }
+            extractResults.value.push(newTable)
+            const tableIndex = extractResults.value.length - 1
+            // 假设后端 schema_id 与数组索引一致（0,1,2...）
+            schemaMap.set(idx, tableIndex)
+            currentExtractSchemas.push({
+              name: schemaItem.name || `表格${idx + 1}`,
+              tableIndex
+            })
+            // 处理等待该 schema_id 的 pendingRows
+            const matchedIndices: number[] = []
+            for (let i = 0; i < pendingRows.length; i++) {
+              if (pendingRows[i].schemaId === idx) {
+                const rowCells = pendingRows[i].cells
+                const rowObj: Record<string, string> = {}
+                columns.forEach((col, colIdx) => {
+                  rowObj[col] = rowCells[colIdx] || ''
+                })
+                addRowToBuffer(tableIndex, rowObj)
+                matchedIndices.push(i)
+              }
+            }
+            // 从 pendingRows 中移除已处理的行（从后往前删除避免索引错乱）
+            for (let i = matchedIndices.length - 1; i >= 0; i--) {
+              pendingRows.splice(matchedIndices[i], 1)
+            }
+          }
+        }
+      } else if (type === 'row') {
+        const { table } = payload
+        if (table && typeof table.schema_id === 'number') {
+          const schemaId = table.schema_id
+          const rowCells = table.row?.cells || []
+          const tableIndex = schemaMap.get(schemaId)
+          if (tableIndex !== undefined) {
+            const targetTable = extractResults.value[tableIndex]
+            if (targetTable) {
+              const rowObj: Record<string, string> = {}
+              targetTable.columns.forEach((col, colIdx) => {
+                rowObj[col] = rowCells[colIdx] || ''
+              })
+              addRowToBuffer(tableIndex, rowObj)
+            }
+          } else {
+            // 暂时无法匹配，存入 pendingRows
+            console.log(`[Info] schema_id ${schemaId} 尚未加载，暂存行数据`)
+            pendingRows.push({ schemaId, cells: rowCells })
+          }
+        }
+      }
+    }
+  }
+
   // 开始提取（流式）
   const handleExtract = async () => {
     if (extractForm.templateIds.length === 0) {
@@ -254,28 +602,26 @@
       return
     }
 
-    // 如果已有进行中的请求，先中断
     if (abortController) {
       abortController.abort()
     }
 
-    // 重置状态
     extracting.value = true
     extractedOnce.value = true
-    extractResults.value = [] // 清空旧结果
+    extractResults.value = []
     activeTab.value = '0'
+    currentExtractSchemas = [] // 重置本次提取的 schema 记录
+    pendingRowsMap.clear()
+    // 启动批量更新定时器
+    startBatchUpdater()
 
-    // 用于存储 schema 映射：schema_id -> 表格在 extractResults 中的索引
     const schemaMap = new Map<number, number>()
-    // 用于暂存未找到对应 schema 的 row（理论上不会出现，但做防御）
     const pendingRows: { schemaId: number; cells: string[] }[] = []
 
-    // 创建 AbortController
     abortController = new AbortController()
 
     try {
-      const baseURL = import.meta.env.VITE_API_BASE_URL || ''
-      const url = `${baseURL}/api/table/extract-specified`
+      const url = `http://poyuan.kmdns.net:36879/api/table/extract-specified`
       const token = getAuthToken()
 
       const response = await fetch(url, {
@@ -295,53 +641,60 @@
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
-
       if (!response.body) {
         throw new Error('当前浏览器不支持流式响应')
       }
 
       const reader = response.body.getReader()
       const decoder = new TextDecoder('utf-8')
-      let buffer = '' // 用于存储不完整的行
+      let buffer = ''
 
-      // 逐块读取流
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
 
-        // 将新数据追加到缓冲区
         buffer += decoder.decode(value, { stream: true })
-        // 按换行符分割
         const lines = buffer.split('\n')
-        // 最后一行可能不完整，保留到下一次
         buffer = lines.pop() || ''
 
         for (const line of lines) {
-          if (!line.trim()) continue
+          const trimmedLine = line.trim()
+          if (!trimmedLine) continue
+
+          let jsonStr = trimmedLine
+          if (jsonStr.startsWith('data:')) {
+            jsonStr = jsonStr.replace(/^data:\s*/, '')
+          }
+          if (!jsonStr.startsWith('{')) continue
+
           try {
-            const message = JSON.parse(line)
+            const message = JSON.parse(jsonStr)
             await processStreamMessage(message, schemaMap, pendingRows)
           } catch (e) {
-            console.warn('解析流消息失败:', line, e)
+            console.warn('解析流消息失败:', jsonStr, e)
           }
         }
       }
 
-      // 处理最后可能剩余的不完整行
+      // 处理剩余 buffer
       if (buffer.trim()) {
-        try {
-          const message = JSON.parse(buffer)
-          await processStreamMessage(message, schemaMap, pendingRows)
-        } catch (e) {
-          console.warn('解析最后一条消息失败:', buffer, e)
+        let jsonStr = buffer.trim()
+        if (jsonStr.startsWith('data:')) {
+          jsonStr = jsonStr.replace(/^data:\s*/, '')
+        }
+        if (jsonStr.startsWith('{')) {
+          try {
+            const message = JSON.parse(jsonStr)
+            await processStreamMessage(message, schemaMap, pendingRows)
+          } catch (e) {
+            console.warn('解析最后消息失败:', jsonStr, e)
+          }
         }
       }
 
-      // 流正常结束，未收到 done 事件也认为完成
       ElMessage.success(`提取完成，共 ${extractResults.value.length} 个表格`)
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.log('流式请求已中断')
         ElMessage.info('提取已取消')
       } else {
         console.error('流式提取失败:', error)
@@ -350,80 +703,10 @@
     } finally {
       extracting.value = false
       abortController = null
-      // 如果没有任何表格数据，提示空结果
+      // 确保最终数据被渲染并停止定时器
+      stopBatchUpdater()
       if (extractResults.value.length === 0 && extractedOnce.value) {
         ElMessage.info('未提取到任何表格数据')
-      }
-    }
-  }
-
-  // 处理流式消息（info, data, done）
-  const processStreamMessage = async (
-    message: any,
-    schemaMap: Map<number, number>,
-    pendingRows: { schemaId: number; cells: string[] }[]
-  ) => {
-    const { event, data } = message
-    if (event === 'info') {
-      // 可选：控制台输出或轻提示（避免频繁弹窗）
-      console.log('[Info]', data)
-      return
-    }
-
-    if (event === 'done') {
-      console.log('[Done] 提取结束')
-      return
-    }
-
-    if (event === 'data' && data) {
-      let payload: any
-      try {
-        // data 字段是一个 JSON 字符串，需要二次解析
-        payload = typeof data === 'string' ? JSON.parse(data) : data
-      } catch (e) {
-        console.warn('解析 data 字段失败:', data, e)
-        return
-      }
-
-      const { type } = payload
-      if (type === 'schema') {
-        // 处理表结构
-        const schemas = payload.schema // 数组，每个元素包含 name, fields 等
-        if (Array.isArray(schemas)) {
-          for (let idx = 0; idx < schemas.length; idx++) {
-            const schemaItem = schemas[idx]
-            const fields = schemaItem.fields || []
-            const columns = fields.map((field: any) => field.name)
-            const newTable = {
-              columns,
-              rows: []
-            }
-            extractResults.value.push(newTable)
-            // 映射 schema_id 到表格索引
-            schemaMap.set(idx, extractResults.value.length - 1)
-          }
-        }
-      } else if (type === 'row') {
-        // 处理行数据
-        const { table } = payload
-        if (table && typeof table.schema_id === 'number') {
-          const schemaId = table.schema_id
-          const rowCells = table.row?.cells || []
-          const tableIndex = schemaMap.get(schemaId)
-          if (tableIndex !== undefined) {
-            const targetTable = extractResults.value[tableIndex]
-            if (targetTable) {
-              const rowObj: Record<string, string> = {}
-              targetTable.columns.forEach((col, colIdx) => {
-                rowObj[col] = rowCells[colIdx] || ''
-              })
-              targetTable.rows.push(rowObj)
-            }
-          } else {
-            // 防御：暂存未找到 schema 的行（理论上不会发生）
-            pendingRows.push({ schemaId, cells: rowCells })
-          }
-        }
       }
     }
   }
@@ -435,6 +718,7 @@
       abortController = null
       extracting.value = false
     }
+    stopBatchUpdater()
     extractResults.value = []
     extractedOnce.value = false
     activeTab.value = '0'
@@ -448,6 +732,7 @@
     // 组件卸载时中断请求
     if (abortController) {
       abortController.abort()
+      stopBatchUpdater()
     }
   })
 </script>
@@ -833,6 +1118,72 @@
     .extract-btn,
     .clear-results-btn {
       width: 100%;
+    }
+  }
+
+  .history-panel {
+    margin-top: 24px;
+    padding: 20px;
+    border-radius: 24px;
+  }
+
+  .history-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+  }
+
+  .history-panel .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .history-panel .panel-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .history-panel .count-badge {
+    border-radius: 20px;
+  }
+
+  .history-panel .action-btn {
+    margin-left: 12px;
+  }
+
+  .history-table {
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .table-detail-dialog :deep(.el-dialog__body) {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  /* 确保空状态在历史为空时正常显示 */
+  .empty-state {
+    margin-top: 24px;
+  }
+
+  /* 响应式调整 */
+  @media (max-width: 768px) {
+    .history-panel .panel-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .history-panel .header-right {
+      align-self: flex-end;
     }
   }
 </style>
