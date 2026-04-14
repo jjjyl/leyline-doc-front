@@ -194,9 +194,7 @@
                     class="upload-progress-bar"
                   />
                 </div>
-                <p class="progress-detail">
-                  进度: {{ uploadedCount }} / {{ totalUploadCount }}
-                </p>
+                <p class="progress-detail"> 进度: {{ uploadedCount }} / {{ totalUploadCount }} </p>
               </div>
             </div>
 
@@ -240,12 +238,7 @@
             <ArtSvgIcon icon="ri:file-list-3-line" class="title-icon" />
             已导入文档
           </h3>
-          <el-button
-            text
-            @click="loadDocuments"
-            :loading="loading"
-            class="refresh-btn"
-          >
+          <el-button text @click="loadDocuments" :loading="loading" class="refresh-btn">
             <ArtSvgIcon icon="ri:refresh-line" :class="{ rotating: loading }" class="mr-1" />
             刷新
           </el-button>
@@ -260,7 +253,8 @@
             border
             class="modern-table"
             :header-cell-style="{
-              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+              background:
+                'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
               color: '#333',
               fontWeight: '600',
               fontSize: '14px'
@@ -288,11 +282,7 @@
 
             <el-table-column label="类型" width="120">
               <template #default="{ row }">
-                <el-tag
-                  :type="row.isFolder ? 'warning' : 'primary'"
-                  effect="plain"
-                  size="small"
-                >
+                <el-tag :type="row.isFolder ? 'warning' : 'primary'" effect="plain" size="small">
                   {{ row.isFolder ? '文件夹' : typeMap[row.type] || row.type || '文件' }}
                 </el-tag>
               </template>
@@ -314,7 +304,9 @@
               <template #default="{ row }">
                 <div v-if="!row.isFolder" class="table-badge">
                   <ArtSvgIcon
-                    :icon="row.hasTable ? 'ri:checkbox-circle-fill' : 'ri:indeterminate-circle-line'"
+                    :icon="
+                      row.hasTable ? 'ri:checkbox-circle-fill' : 'ri:indeterminate-circle-line'
+                    "
                     :class="row.hasTable ? 'has-table' : 'no-table'"
                   />
                   <span>{{ row.hasTable ? '是' : '否' }}</span>
@@ -398,7 +390,12 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="showCreateLibDialog = false" class="cancel-btn">取消</el-button>
-          <el-button type="primary" @click="handleCreateLib" :loading="creatingLib" class="confirm-btn">
+          <el-button
+            type="primary"
+            @click="handleCreateLib"
+            :loading="creatingLib"
+            class="confirm-btn"
+          >
             <ArtSvgIcon icon="ri:check-line" class="mr-1" />
             确定
           </el-button>
@@ -415,11 +412,7 @@
     >
       <el-form :model="editLibForm" :rules="editLibRules" ref="editLibFormRef">
         <el-form-item label="文档库名称" prop="name">
-          <el-input
-            v-model="editLibForm.name"
-            placeholder="请输入文档库名称"
-            class="dialog-input"
-          >
+          <el-input v-model="editLibForm.name" placeholder="请输入文档库名称" class="dialog-input">
             <template #prefix>
               <ArtSvgIcon icon="ri:database-2-line" class="input-icon" />
             </template>
@@ -429,7 +422,12 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="showEditLibDialog = false" class="cancel-btn">取消</el-button>
-          <el-button type="primary" @click="handleEditLib" :loading="editingLib" class="confirm-btn">
+          <el-button
+            type="primary"
+            @click="handleEditLib"
+            :loading="editingLib"
+            class="confirm-btn"
+          >
             <ArtSvgIcon icon="ri:check-line" class="mr-1" />
             确定
           </el-button>
@@ -471,7 +469,12 @@
       </el-form>
       <template #footer>
         <el-button @click="showCreateFolderDialog = false" class="cancel-btn">取消</el-button>
-        <el-button type="primary" @click="handleCreateFolder" :loading="creatingFolder" class="confirm-btn">
+        <el-button
+          type="primary"
+          @click="handleCreateFolder"
+          :loading="creatingFolder"
+          class="confirm-btn"
+        >
           <ArtSvgIcon icon="ri:check-line" class="mr-1" />
           确定
         </el-button>
@@ -1128,11 +1131,11 @@
   // 新增辅助函数
   const getDocIcon = (type?: string) => {
     const icons: Record<string, string> = {
-      'docx': 'ri:file-word-2-line',
-      'xlsx': 'ri:file-excel-2-line',
-      'pdf': 'ri:file-pdf-line',
-      'txt': 'ri:file-text-line',
-      'md': 'ri:markdown-line'
+      docx: 'ri:file-word-2-line',
+      xlsx: 'ri:file-excel-2-line',
+      pdf: 'ri:file-pdf-line',
+      txt: 'ri:file-text-line',
+      md: 'ri:markdown-line'
     }
     return icons[type?.toLowerCase() || ''] || 'ri:file-line'
   }
@@ -1192,8 +1195,13 @@
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
   }
 
   .panel-title {
@@ -1349,7 +1357,8 @@
   }
 
   @keyframes ring-pulse {
-    0%, 100% {
+    0%,
+    100% {
       transform: translate(-50%, -50%) scale(1);
       opacity: 0.2;
     }
@@ -1433,7 +1442,11 @@
   }
 
   .format-badge.txt {
-    background: linear-gradient(135deg, rgba(158, 158, 158, 0.15) 0%, rgba(158, 158, 158, 0.05) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(158, 158, 158, 0.15) 0%,
+      rgba(158, 158, 158, 0.05) 100%
+    );
     color: #9e9e9e;
     border: 1px solid rgba(158, 158, 158, 0.3);
   }
@@ -1458,7 +1471,9 @@
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .progress-info {

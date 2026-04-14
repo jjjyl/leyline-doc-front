@@ -55,21 +55,13 @@
                 <ArtSvgIcon icon="ri:file-text-line" class="label-icon" />
                 <span>选择文档</span>
               </label>
-              <el-select
+              <!-- 替换为 -->
+              <DocumentTreeSelect
                 v-model="extractForm.documentId"
+                :lib-id="extractForm.libId"
                 placeholder="请选择文档"
                 class="modern-select"
-              >
-                <el-option v-for="doc in documents" :key="doc.id" :label="doc.name" :value="doc.id">
-                  <div class="option-content">
-                    <ArtSvgIcon :icon="getDocIcon(doc.type)" class="option-icon" />
-                    <span class="option-text">{{ doc.name }}</span>
-                    <el-tag v-if="doc.hasTable" size="small" type="success" effect="dark">
-                      有表格
-                    </el-tag>
-                  </div>
-                </el-option>
-              </el-select>
+              />
             </div>
           </div>
 
@@ -286,12 +278,15 @@
   import * as docApi from '@/api/doc'
   import * as tableApi from '@/api/table'
   import * as docLibApi from '@/api/doc-lib'
+  import DocumentTreeSelect from '@views/doc-extraction/Tree/DocumentTreeSelect.vue'
 
   defineOptions({ name: 'InfoExtract' })
 
   const extractForm = reactive({
     libId: null as number | null,
-    documentId: null
+    documentId: null,
+    types: [] as string[],
+    customRule: ''
   })
 
   const documents = ref<Array<Api.Doc.DocInfo>>([])
@@ -346,6 +341,15 @@
       md: 'ri:markdown-line'
     }
     return icons[type?.toLowerCase() || ''] || 'ri:file-line'
+  }
+
+  const toggleType = (type: string) => {
+    const index = extractForm.types.indexOf(type)
+    if (index > -1) {
+      extractForm.types.splice(index, 1)
+    } else {
+      extractForm.types.push(type)
+    }
   }
 
   onMounted(async () => {
@@ -680,6 +684,150 @@
 
   .option-text {
     flex: 1;
+  }
+
+  /* 提取类型 */
+  .extraction-types-section {
+    margin-bottom: 24px;
+  }
+
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 12px;
+  }
+
+  .type-chips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  .type-chip {
+    position: relative;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 2px solid rgba(102, 126, 234, 0.15);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+  }
+
+  .type-chip:hover {
+    background: rgba(102, 126, 234, 0.08);
+    border-color: rgba(102, 126, 234, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+  }
+
+  .type-chip.active {
+    background: linear-gradient(
+      135deg,
+      rgba(102, 126, 234, 0.15) 0%,
+      rgba(118, 75, 162, 0.15) 100%
+    );
+    border-color: #667eea;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+  }
+
+  .chip-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .chip-icon {
+    font-size: 28px;
+  }
+
+  .chip-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .chip-check {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    background: #667eea;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    animation: check-pop 0.3s ease-out;
+  }
+
+  @keyframes check-pop {
+    0% {
+      transform: scale(0);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .hidden-checkbox {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* 自定义规则 */
+  .custom-rule-section {
+    margin-bottom: 28px;
+  }
+
+  .rule-input :deep(.el-textarea__inner) {
+    border-radius: 12px;
+    border: 2px solid rgba(102, 126, 234, 0.2);
+    transition: all 0.3s;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .rule-input :deep(.el-textarea__inner):hover {
+    border-color: #667eea;
+  }
+
+  .rule-input :deep(.el-textarea__inner):focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .input-icon {
+    color: #667eea;
+    font-size: 16px;
+  }
+
+  .rule-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #666;
+  }
+
+  .hint-icon {
+    color: #667eea;
+    font-size: 16px;
   }
 
   /* 操作区域 */

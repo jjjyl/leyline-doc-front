@@ -33,7 +33,7 @@ export function finishUpload(docId: number) {
  * @returns 文档列表
  */
 export function getDocList(parentId?: number, libId?: number) {
-  return request.get<Array<Api.Doc.DocInfo>>({
+  return request.get<{ docs: any[] }>({
     url: '/api/doc',
     params: {
       parent_id: parentId,
