@@ -253,6 +253,7 @@
         />
       </vxe-table>
       <template #footer>
+        <el-button type="primary" @click="exportCurrentTable">导出 Excel</el-button>
         <el-button @click="tableDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
@@ -264,6 +265,7 @@
   import { ElMessage } from 'element-plus'
   import { getDocList } from '@/api/doc'
   import { getTemplateList } from '@/api/templates'
+  import { exportToExcel } from '@/utils/export'
 
   // 不再直接使用 extractSpecifiedTables，改为流式 fetch
   // import { extractSpecifiedTables } from '@/api/table'
@@ -709,6 +711,20 @@
         ElMessage.info('未提取到任何表格数据')
       }
     }
+  }
+
+  // 导出当前表格
+  const exportCurrentTable = () => {
+    if (!currentTable.value.columns.length || !currentTable.value.rows.length) {
+      ElMessage.warning('无数据可导出')
+      return
+    }
+    exportToExcel(
+      currentTable.value.columns,
+      currentTable.value.rows,
+      currentTable.value.title || '表格数据'
+    )
+    ElMessage.success('导出成功')
   }
 
   // 清空结果，并中断正在进行的请求

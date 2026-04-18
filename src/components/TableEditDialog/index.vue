@@ -76,6 +76,7 @@
     <el-empty v-else description="该文档暂无提取到的表格数据" />
 
     <template #footer>
+      <el-button type="primary" @click="exportExcel">导出 Excel</el-button>
       <el-button @click="handleClose">关闭</el-button>
     </template>
   </el-dialog>
@@ -85,11 +86,30 @@
   import { ref, watch, computed } from 'vue'
   // 引入修改行数据的接口函数
   import { updateTableRow } from '@/api/table'
+  import { exportToExcel } from '@/utils/export'
 
   // 自定义指令：输入框自动聚焦
   const vFocus = {
     mounted: (el: HTMLElement) => el.querySelector('input')?.focus()
   }
+
+  // 取第一个表格（通常一个文档对应一个表格，如需导出所有表格可扩展）
+  const firstTable = computed(() => props.tableData?.tables?.[0])
+
+  // 表头数组
+  const currentHeaders = computed(() => firstTable.value?.headers || [])
+
+  // 将 rows（{ cells: string[] }）转换为对象数组，方便 Vxe-Table 渲染和导出
+  const tableRows = computed(() => {
+    const rows = firstTable.value?.rows || []
+    return rows.map((row) => {
+      const obj: Record<string, string> = {}
+      currentHeaders.value.forEach((header, idx) => {
+        obj[header] = row.cells[idx] || ''
+      })
+      return obj
+    })
+  })
 
   // ========== Props & Emits 定义（支持v-model调用） ==========
   const props = withDefaults(
@@ -213,6 +233,17 @@
     dialogVisible.value = false
     editingCell.value = { tableId: '', rowId: '', colIndex: -1, oldValue: '' }
     activeTab.value = ''
+  }
+
+  // 导出当前表格为 Excel
+  const exportExcel = () => {
+    if (!currentHeaders.value.length || !tableRows.value.length) {
+      ElMessage.warning('无数据可导出')
+      return
+    }
+    const fileName = `表格_${firstTable.value?.name || '未命名'}_${Date.now()}`
+    exportToExcel(currentHeaders.value, tableRows.value, fileName)
+    ElMessage.success('导出成功')
   }
 
   // 监听传入的数据，默认激活第一张表格
