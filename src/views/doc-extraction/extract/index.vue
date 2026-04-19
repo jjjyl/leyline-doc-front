@@ -333,7 +333,7 @@
 
   const onLibChange = () => {
     extractForm.documentId = null
-    loadDocuments()
+    catchHistory()
   }
 
   const getDocIcon = (type?: string) => {
