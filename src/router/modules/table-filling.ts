@@ -37,20 +37,20 @@ export const tableFillingRoutes: AppRouteRecord = {
           { title: '手动补充', authMark: 'manual' }
         ]
       }
-    },
-    {
-      path: 'export',
-      name: 'TableExport',
-      component: '/table-filling/export',
-      meta: {
-        title: '导出分享',
-        icon: 'ri:share-line',
-        keepAlive: true,
-        authList: [
-          { title: '导出文件', authMark: 'export' },
-          { title: '分享链接', authMark: 'share' }
-        ]
-      }
     }
+    // {
+    //   path: 'export',
+    //   name: 'TableExport',
+    //   component: '/table-filling/export',
+    //   meta: {
+    //     title: '导出分享',
+    //     icon: 'ri:share-line',
+    //     keepAlive: true,
+    //     authList: [
+    //       { title: '导出文件', authMark: 'export' },
+    //       { title: '分享链接', authMark: 'share' }
+    //     ]
+    //   }
+    // }
   ]
 }

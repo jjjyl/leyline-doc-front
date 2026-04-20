@@ -37,20 +37,20 @@ export const docExtractionRoutes: AppRouteRecord = {
           { title: '自定义规则', authMark: 'custom' }
         ]
       }
-    },
-    {
-      path: 'storage',
-      name: 'DataStorage',
-      component: '/doc-extraction/storage',
-      meta: {
-        title: '数据存储',
-        icon: 'ri:database-line',
-        keepAlive: false,
-        authList: [
-          { title: '配置存储', authMark: 'config' },
-          { title: '备份恢复', authMark: 'backup' }
-        ]
-      }
     }
+    // {
+    //   path: 'storage',
+    //   name: 'DataStorage',
+    //   component: '/doc-extraction/storage',
+    //   meta: {
+    //     title: '数据存储',
+    //     icon: 'ri:database-line',
+    //     keepAlive: false,
+    //     authList: [
+    //       { title: '配置存储', authMark: 'config' },
+    //       { title: '备份恢复', authMark: 'backup' }
+    //     ]
+    //   }
+    // }
   ]
 }
