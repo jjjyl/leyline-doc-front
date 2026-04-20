@@ -17,13 +17,13 @@ import { tableManagerRoutes } from './table-manager'
 export const routeModules: AppRouteRecord[] = [
   dashboardRoutes,
   chatRoutes,
-  systemRoutes,
-  articleRoutes,
-  resultRoutes,
-  exceptionRoutes,
-  docIntelligenceRoutes,
+  // systemRoutes,
+  // articleRoutes,
+  // resultRoutes,
+  // exceptionRoutes,
+  // docIntelligenceRoutes,
   docExtractionRoutes,
-  tableFillingRoutes,
-  tableManagerRoutes,
-  ...helpRoutes
+  tableFillingRoutes
+  // tableManagerRoutes,
+  // ...helpRoutes
 ]
